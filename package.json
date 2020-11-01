@@ -1,0 +1,22 @@
+{
+  "name": "doc-locker",
+  "version": "0.0.1",
+  "description": "Document locker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stephenzsy/doc-locker.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stephenzsy/doc-locker/issues"
+  },
+  "homepage": "https://github.com/stephenzsy/doc-locker#readme",
+  "devDependencies": {
+    "typescript": "^4.0.5"
+  }
+}
