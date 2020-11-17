@@ -4,7 +4,21 @@ RUN apt-get update
 RUN apt-get install -y \
   curl \
   gpg \
-  xz-utils
+  xz-utils \
+  apt-transport-https \
+  ca-certificates \
+  gnupg2 \
+  software-properties-common
+
+# install enovy
+
+RUN curl -sL 'https://getenvoy.io/gpg' | apt-key add -
+RUN apt-key fingerprint 6FF974DB | grep "5270 CEAC"
+RUN add-apt-repository "deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb $(lsb_release -cs) stable"
+RUN apt update
+RUN apt install getenvoy-envoy
+
+RUN apt upgrade -y
 
 # install node
 RUN groupadd --gid 1000 node \
