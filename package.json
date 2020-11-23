@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/stephenzsy/doc-locker#readme",
   "devDependencies": {
+    "@types/google-protobuf": "^3.7.4",
     "@types/yargs": "^15.0.9",
     "browserify": "^17.0.0",
     "grpc-tools": "^1.10.0",

@@ -8,5 +8,5 @@ message HostStatusResponse {
 }
 
 service HostService {
-    rpc Status(HostStatusRequest) returns (HostStatusResponse) {}
+    rpc Status(HostStatusRequest) returns (HostStatusResponse);
 }
