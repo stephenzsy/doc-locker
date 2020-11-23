@@ -12,11 +12,12 @@ RUN apt-get install -y \
 
 # install enovy
 
-RUN curl -sL 'https://getenvoy.io/gpg' | apt-key add -
-RUN apt-key fingerprint 6FF974DB | grep "5270 CEAC"
-RUN add-apt-repository "deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb $(lsb_release -cs) stable"
+RUN curl -sL 'https://getenvoy.io/gpg' | apt-key add - \
+  && apt-key fingerprint 6FF974DB | grep "5270 CEAC" \
+  && add-apt-repository "deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb $(lsb_release -cs) stable" 
 RUN apt update
-RUN apt install getenvoy-envoy
+RUN apt install getenvoy-envoy \
+  && envoy --version
 
 RUN apt upgrade -y
 

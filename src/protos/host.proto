@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message HostStatusRequest {
+}
+
+message HostStatusResponse {
+    string statusJson = 1;
+}
+
+service HostService {
+    rpc Status(HostStatusRequest) returns (HostStatusResponse) {}
+}
