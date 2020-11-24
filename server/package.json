@@ -1,7 +1,7 @@
 {
-  "name": "doc-locker",
+  "name": "doc-locker-server",
   "version": "0.0.1",
-  "description": "Document locker",
+  "description": "Document locker server",
   "main": "index.js",
   "scripts": {
     "gulp": "gulp",
