@@ -5,4 +5,3 @@ export declare class HostStatusResponse extends Message {
     getStatusJson(): string;
     setStatusJson(statusJson: string): this;
 };
-
