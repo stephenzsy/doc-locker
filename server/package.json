@@ -16,6 +16,7 @@
   "bugs": {
     "url": "https://github.com/stephenzsy/doc-locker/issues"
   },
+  "private": true,
   "homepage": "https://github.com/stephenzsy/doc-locker#readme",
   "devDependencies": {
     "@types/google-protobuf": "^3.7.4",
