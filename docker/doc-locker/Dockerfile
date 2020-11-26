@@ -19,13 +19,11 @@ RUN apt update
 RUN apt install getenvoy-envoy \
   && envoy --version
 
-RUN apt upgrade -y
-
 # install node
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ENV NODE_VERSION 15.2.1
+ENV NODE_VERSION 15.3.0
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
@@ -67,7 +65,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && node --version \
   && npm --version
 
-ENV YARN_VERSION 1.22.5
+ENV YARN_VERSION 1.22.10
 
 RUN set -ex \
   && for key in \
@@ -87,3 +85,5 @@ RUN set -ex \
   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
   # smoke test
   && yarn --version
+
+RUN apt upgrade -y

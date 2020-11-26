@@ -20,6 +20,7 @@
   "homepage": "https://github.com/stephenzsy/doc-locker#readme",
   "devDependencies": {
     "@types/google-protobuf": "^3.7.4",
+    "@types/mustache": "^4.0.1",
     "@types/yargs": "^15.0.10",
     "browserify": "^17.0.0",
     "grpc-tools": "^1.10.0",
@@ -32,6 +33,7 @@
     "grpc": "^1.24.4",
     "grpc-health-check": "^1.8.0",
     "grpc-web": "^1.2.1",
+    "mustache": "^4.0.1",
     "yargs": "^16.1.0"
   }
 }

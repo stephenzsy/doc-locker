@@ -1,12 +1,21 @@
 'use strict';
 
-const gulp = require("gulp");
+const { task, series, src, dest } = require("gulp");
 const ts = require("gulp-typescript");
 
-const tsProject = ts.createProject("tsconfig.json");
+task('build', () => {
+    const tsProject = ts.createProject("tsconfig.json");
 
-exports.default = () => tsProject
-    .src()
-    .pipe(tsProject())
-    .js
-    .pipe(gulp.dest("dist"));  
+    return tsProject
+        .src()
+        .pipe(tsProject())
+        .js
+        .pipe(dest("dist"));
+});
+
+task('copyTemplates', () => {
+    return src('templates/**/*.mustache')
+        .pipe(dest('dist/templates'))
+})
+
+exports.default = series('build', 'copyTemplates');
