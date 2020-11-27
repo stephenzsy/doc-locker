@@ -1,7 +1,7 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var host_pb = require('./host_pb.js');
 
 function serialize_doclocker_host_HostStatusRequest(arg) {

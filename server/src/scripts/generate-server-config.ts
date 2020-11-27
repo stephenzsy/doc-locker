@@ -8,7 +8,8 @@ const serverSetupConfig = Configurations.getServerSetupConfiguration();
 const ldsYamlTemplate: string = fs.readFileSync(path.join(__dirname, '..', 'templates', 'server-config', 'lds_yaml.mustache'), 'utf-8');
 
 const ldsYamlContent = mustache.render(ldsYamlTemplate, {
-    listenerPort: serverSetupConfig.port
+    listenerAddress: serverSetupConfig.proxyListenerConfiguration.address,
+    listenerPort: serverSetupConfig.proxyListenerConfiguration.port
 });
 
 serverSetupConfig.saveEnvoyConfiguration('lds.yaml', ldsYamlContent);

@@ -1,6 +1,4 @@
-import { handleUnaryCall, MethodDefinition, ServiceDefinition } from "grpc";
-
-import { MethodDefinition, ServiceDefinition } from 'grpc';
+import { handleUnaryCall, ServiceDefinition } from "@grpc/grpc-js";
 import { HostStatusRequest, HostStatusResponse } from './host_pb';
 
 export interface IHostServiceService {

@@ -26,8 +26,14 @@ export abstract class Configuration<T> {
     }
 }
 
-export interface IServerSetupConfiguration {
+export interface IListenerSetupConfiguration {
+    readonly address: string;
     readonly port: number;
+}
+
+export interface IServerSetupConfiguration {
+    readonly proxyListener: IListenerSetupConfiguration;
+    readonly serverListener: IListenerSetupConfiguration;
 }
 
 export class ServerSetupConfiguration extends Configuration<IServerSetupConfiguration>{
@@ -42,8 +48,12 @@ export class ServerSetupConfiguration extends Configuration<IServerSetupConfigur
         super(['setup', 'server.json']);
     }
 
-    public get port(): number {
-        return this.data.port;
+    public get proxyListenerConfiguration(): IListenerSetupConfiguration {
+        return this.data.proxyListener;
+    }
+
+    public get serverListenerConfiguration(): IListenerSetupConfiguration {
+        return this.data.serverListener;
     }
 
     public saveEnvoyConfiguration(key: 'lds.yaml', content: string) {
@@ -51,7 +61,6 @@ export class ServerSetupConfiguration extends Configuration<IServerSetupConfigur
         const filepath = path.join(configDirectory, 'envoy', key);
         fs.writeFileSync(filepath, content);
     }
-
 }
 
 export class Configurations {
