@@ -1,6 +1,7 @@
+import fs from 'fs';
 import path from 'path';
 import process from 'process';
-import fs from 'fs';
+import { IServerCertificatesSetupConfiguration } from './server-certificate-setup';
 
 export abstract class Configuration<T> {
     public static docLockerConfigDirEnvKey = 'DOC_LOCKER_CONFIG_DIR';
@@ -34,6 +35,7 @@ export interface IListenerSetupConfiguration {
 export interface IServerSetupConfiguration {
     readonly proxyListener: IListenerSetupConfiguration;
     readonly serverListener: IListenerSetupConfiguration;
+    readonly certificates: IServerCertificatesSetupConfiguration;
 }
 
 export class ServerSetupConfiguration extends Configuration<IServerSetupConfiguration>{
@@ -54,6 +56,10 @@ export class ServerSetupConfiguration extends Configuration<IServerSetupConfigur
 
     public get serverListenerConfiguration(): IListenerSetupConfiguration {
         return this.data.serverListener;
+    }
+
+    public get certificatesConfiguration(): IServerCertificatesSetupConfiguration {
+        return this.data.certificates;
     }
 
     public saveEnvoyConfiguration(key: 'lds.yaml', content: string) {
