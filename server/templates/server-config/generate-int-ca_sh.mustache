@@ -1,0 +1,64 @@
+#!/bin/bash
+
+openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
+
+cat>{{{cnfPath}}}<<EOF
+[ req ]
+x509_extensions = v3_ca
+distinguished_name = req_distinguished_name
+prompt = no
+[ req_distinguished_name ]
+CN={{{subjectCn}}}
+[ v3_ca ]
+subjectKeyIdentifier=hash
+basicConstraints=critical,CA:true,pathlen:0
+keyUsage=critical,keyCertSign,cRLSign
+EOF
+
+# create CSR
+openssl req \
+    -new \
+    -sha384 \
+    -config {{{cnfPath}}} \
+    -key {{{privateKeyPath}}} \
+    -out {{{csrPath}}}
+
+openssl << EOF
+engine dynamic \
+    -pre SO_PATH:{{{libPaths.pkcs11}}} \
+    -pre ID:pkcs11 \
+    -pre LIST_ADD:1 \
+    -pre LOAD \
+    -pre MODULE_PATH:{{{libPaths.ykcs11}}} \
+    -pre VERBOSE
+x509 \
+    -engine pkcs11 \
+    -CAkeyform engine \
+    -CAkey slot_0-id_{{{pkcs11slotId}}} \
+    -sha384 \
+    -CA {{{caPath}}} \
+    -req \
+    -extensions v3_ca \
+    -extfile {{{cnfPath}}} \
+    -days=365 \
+    -in {{{csrPath}}} \
+    -out {{{certPath}}}
+EOF
+
+yubico-piv-tool \
+    -a import-key \
+    -s {{{slot}}} \
+    -i {{{privateKeyPath}}} \
+    -k
+
+yubico-piv-tool \
+    -a import-certificate \
+    -s {{{slot}}} \
+    -i {{{certPath}}} \
+    -k
+
+yubico-piv-tool \
+    -a status \
+    -s {{{slot}}}
+
+rm {{{privateKeyPath}}}
