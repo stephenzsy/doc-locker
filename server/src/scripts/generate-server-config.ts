@@ -24,8 +24,9 @@ const configurationDir = Configuration.getConfigurationDir();
 const scriptPath = path.join(configurationDir, 'scripts', 'create-ca.sh');
 const generateCaContent = mustache.render(generateCaTemplate, {
     slot: caCertificateConfig.root[0].yubikey.slot,
-    publicKeyPath: `'${path.join(configurationDir, 'setup', 'ca-public-key.pem')}'`,
-    subject: `'${caCertificateConfig.root[0].subject}'`,
+    cnfPath: path.join(configurationDir, 'setup', 'ca.cnf'),
+    privateKeyPath: path.join(configurationDir, 'setup', 'ca-private-key.pem'),
+    subjectCn: caCertificateConfig.root[0].subject.CN,
     serial: caCertificateConfig.root[0].serial,
     certPath: `'${path.join(configurationDir, 'setup', 'ca-root.pem')}'`
 });
