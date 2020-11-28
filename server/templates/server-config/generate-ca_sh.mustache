@@ -1,10 +1,28 @@
-#!bash
+#!/bin/bash
+
+yubico-piv-tool \
+    -a generate \
+    -s {{{slot}}} \
+    --algorithm ECCP384 \
+    -o {{{publicKeyPath}}} \
+    -k
 
 yubico-piv-tool \
     -a verify-pin \
     -a selfsign \
     -s {{{slot}}} \
     --algorithm ECCP384 \
-    --subject {{{subject}}}
-    --serial {{{serial}}}
-    -o {{{certPath}}}
+    --subject {{{subject}}} \
+    --serial {{{serial}}} \
+    -o {{{certPath}}} \
+    -i {{{publicKeyPath}}}
+
+yubico-piv-tool \
+    -a import-certificate \
+    -s {{{slot}}} \
+    -i {{{certPath}}} \
+    -k
+
+yubico-piv-tool \
+    -a status \
+    -s {{{slot}}}
