@@ -26,6 +26,7 @@ export interface IServerCertificatesSetupConfiguration {
 }
 
 export const pkcs11SlotIdMapping: Partial<{ [key in YubiKeySlotId]: string }> = {
-    "82": "5"
+    "82": "5",
+    "83": "6"
 }
 

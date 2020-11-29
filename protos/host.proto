@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package doclocker.host;
+option go_package = "github.com/stephenzsy/doc-locker/server/gen/host";
 
 message HostStatusRequest {
 }

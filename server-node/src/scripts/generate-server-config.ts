@@ -54,3 +54,5 @@ const generateIntCaContent = mustache.render(generateDeployCaTemplate, {
 });
 fs.writeFileSync(generateIntCaScriptPath, generateIntCaContent);
 fs.chmodSync(generateIntCaScriptPath, '755');
+
+// deployment encryption keys with certificate
