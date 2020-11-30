@@ -39,8 +39,8 @@ type deploymentConfiguration struct {
 type DeploymentConfigurationFile struct {
 	deploymentConfiguration
 	EncryptionMaterial struct {
-		Key []byte `json:"key"`
-	} `json:"encryptedEncryptionKey"`
+		EncryptedKey HexString `json:"encryptedKey"`
+	} `json:"encryptionMaterial"`
 	CanonicalHash       []byte `json:"canonicalHash"`
 	CanonicalSecretHash []byte `json:"canonicalSecretHash"`
 	SigningThumbprint   []byte `json:"signingThumbprint"`
@@ -68,7 +68,7 @@ func newDeploymentConfiguration(configDir string) (*DeploymentConfigurationFile,
 }
 
 func (c *DeploymentConfigurationFile) Save(configDir string) error {
-	marshalled, err := json.Marshal(c)
+	marshalled, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
