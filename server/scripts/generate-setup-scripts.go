@@ -27,6 +27,29 @@ func genEnvoy(configDir string, templatesDir string, serverSetupConfig *configur
 	}
 }
 
+func genRootCa(configDir string,
+	templatesDir string,
+	certificatesConfig configurations.ServerSetupCertificatesConfiguration) {
+	templateFilename := path.Join(templatesDir, "generate-root-ca_sh.mustache")
+	caCertificateConfig := certificatesConfig.Ca.Root[0]
+
+	rendered, e := mustache.RenderFile(templateFilename, map[string]string{
+		"slot":           string(caCertificateConfig.Yubikey.Slot),
+		"cnfPath":        path.Join(configDir, "setup", "ca-root.cnf"),
+		"privateKeyPath": path.Join(configDir, "setup", "ca-root-private-key.pem"),
+		"subjectCn":      caCertificateConfig.Subject.CN,
+		"serial":         caCertificateConfig.Serial,
+		"certPath":       path.Join(configDir, "setup", "ca-root.pem"),
+	})
+	if e != nil {
+		log.Fatal(e)
+	}
+	e = ioutil.WriteFile(path.Join(configDir, "scripts", "generate-root-ca.sh"), []byte(rendered), 0755)
+	if e != nil {
+		log.Fatal(e)
+	}
+}
+
 func main() {
 	serverConfigTemplatePath := os.Getenv("DOCLOCKER_SETUP_TEMPLATES_DIR")
 	if serverConfigTemplatePath == "" {
@@ -38,4 +61,5 @@ func main() {
 		log.Fatal(e)
 	}
 	genEnvoy(configurations.Configurations().ConfigRootDir(), serverConfigTemplatePath, serverSetupConfig)
+	genRootCa(configurations.Configurations().ConfigRootDir(), serverConfigTemplatePath, serverSetupConfig.Certificates())
 }

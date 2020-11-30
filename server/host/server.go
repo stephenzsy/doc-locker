@@ -16,8 +16,7 @@ type HostServiceServer struct {
 	pb.UnimplementedHostServiceServer
 }
 
-// GetFeature returns the feature at the given point.
-func (s *HostServiceServer) Status(ctx context.Context, point *pb.HostStatusRequest) (*pb.HostStatusResponse, error) {
+func (*HostServiceServer) Status(ctx context.Context, input *pb.HostStatusRequest) (*pb.HostStatusResponse, error) {
 	statusJson, err := json.Marshal(StatusInfo{
 		GolangVersion: runtime.Version(),
 	})

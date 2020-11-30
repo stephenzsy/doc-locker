@@ -7,10 +7,42 @@ type ListenerConfig struct {
 	Port    uint   `json:"port"`
 }
 
+type YubikeySlotId string
+
+const (
+	Slot82 YubikeySlotId = "82"
+	Slot83 YubikeySlotId = "83"
+)
+
+type CertificateConfig struct {
+	Subject struct {
+		CN string `json:"CN"`
+	} `json:"subject"`
+	Serial string `json:"serial"`
+}
+
+type YubikeyStoredCertificateConfiguration struct {
+	CertificateConfig
+	Yubikey struct {
+		Slot YubikeySlotId `json:"slot"`
+	}
+}
+
+type ServerSetupCertificatesConfiguration struct {
+	LibPaths struct {
+		Pkcs11 string `json:"pkcs11"`
+		Ykcs11 string `json:"ykcs11"`
+	} `json:"libPaths"`
+	Ca struct {
+		Root []YubikeyStoredCertificateConfiguration `json:"root"`
+	} `json:"ca"`
+}
+
 type ServerSetupConfiguration struct {
 	data struct {
-		ServerListener ListenerConfig `json:"serverListener"`
-		ProxyListener  ListenerConfig `json:"proxyListener"`
+		ServerListener ListenerConfig                       `json:"serverListener"`
+		ProxyListener  ListenerConfig                       `json:"proxyListener"`
+		Certificates   ServerSetupCertificatesConfiguration `json:"certificates"`
 	}
 }
 
@@ -26,4 +58,8 @@ func (c *ServerSetupConfiguration) ServerListener() ListenerConfig {
 
 func (c *ServerSetupConfiguration) ProxyListener() ListenerConfig {
 	return c.data.ProxyListener
+}
+
+func (c *ServerSetupConfiguration) Certificates() ServerSetupCertificatesConfiguration {
+	return c.data.Certificates
 }
