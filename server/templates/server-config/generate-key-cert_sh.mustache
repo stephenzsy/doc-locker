@@ -2,24 +2,24 @@
 
 openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
 
-cat>{{{cnfPath}}}<<EOF
+cat>{{{csrCnfPath}}}<<EOF
 [ req ]
-x509_extensions = v3_ca
 distinguished_name = req_distinguished_name
 prompt = no
 [ req_distinguished_name ]
 CN={{{subjectCn}}}
-[ v3_ca ]
-subjectKeyIdentifier=hash
-basicConstraints=critical,CA:true,pathlen:0
-keyUsage=critical,keyCertSign,cRLSign
+EOF
+
+cat>{{{crtCnfPath}}}<<EOF
+basicConstraints=critical,CA:false
+keyUsage=dataEncipherment
 EOF
 
 # create CSR
 openssl req \
     -new \
     -sha384 \
-    -config {{{cnfPath}}} \
+    -config {{{csrCnfPath}}} \
     -key {{{privateKeyPath}}} \
     -out {{{csrPath}}}
 
@@ -38,27 +38,13 @@ x509 \
     -sha384 \
     -CA {{{caPath}}} \
     -req \
-    -extensions v3_ca \
-    -extfile {{{cnfPath}}} \
+    -extfile {{{crtCnfPath}}} \
     -days=365 \
+    -set_serial {{{serial}}} \
     -in {{{csrPath}}} \
     -out {{{certPath}}}
 EOF
 
-yubico-piv-tool \
-    -a import-key \
-    -s {{{slot}}} \
-    -i {{{privateKeyPath}}} \
-    -k
+cat {{{privateKeyPath}}} {{{certPath}}} {{{caPath}}} {{{rootCaPath}}} > {{{bundleCertPath}}}
+rm {{{certPath}}} {{{privateKeyPath}}}
 
-yubico-piv-tool \
-    -a import-certificate \
-    -s {{{slot}}} \
-    -i {{{certPath}}} \
-    -k
-
-yubico-piv-tool \
-    -a status \
-    -s {{{slot}}}
-
-rm {{{privateKeyPath}}}

@@ -28,14 +28,28 @@ type YubikeyStoredCertificateConfiguration struct {
 	}
 }
 
+func GetPkcs11SlotIdMapping(slot YubikeySlotId) string {
+	switch slot {
+	case Slot82:
+		return "5"
+	case Slot83:
+		return "6"
+	}
+	return ""
+}
+
 type ServerSetupCertificatesConfiguration struct {
 	LibPaths struct {
 		Pkcs11 string `json:"pkcs11"`
 		Ykcs11 string `json:"ykcs11"`
 	} `json:"libPaths"`
 	Ca struct {
-		Root []YubikeyStoredCertificateConfiguration `json:"root"`
+		Root   []YubikeyStoredCertificateConfiguration `json:"root"`
+		Deploy []YubikeyStoredCertificateConfiguration `json:"deploy"`
 	} `json:"ca"`
+	Keys struct {
+		Deploy []CertificateConfig `json:"deploy"`
+	} `json:"keys"`
 }
 
 type ServerSetupConfiguration struct {

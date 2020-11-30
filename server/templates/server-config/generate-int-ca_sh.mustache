@@ -41,6 +41,7 @@ x509 \
     -extensions v3_ca \
     -extfile {{{cnfPath}}} \
     -days=365 \
+    -set_serial {{{serial}}} \
     -in {{{csrPath}}} \
     -out {{{certPath}}}
 EOF
