@@ -8,29 +8,28 @@ import (
 	"sync"
 )
 
-func loadConfigFromFile(filePath string, configData interface{}) {
+func loadConfigFromFile(filePath string, configData interface{}) error {
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	err = json.Unmarshal(bytes, configData)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return err
 }
 
 type configurations struct {
-	configDir       string
-	serverSetup     *serverSetupConfiguration
-	serverSetupOnce sync.Once
+	configDir        string
+	serverSetup      *ServerSetupConfiguration
+	serverSetupError error
+	serverSetupOnce  sync.Once
 }
 
-func (c *configurations) ServerSetup() *serverSetupConfiguration {
+func (c *configurations) ServerSetup() (*ServerSetupConfiguration, error) {
 	c.serverSetupOnce.Do(func() {
-		c.serverSetup = newSetupConfiguration(c.configDir)
+		c.serverSetup, c.serverSetupError = newSetupConfiguration(c.configDir)
 	})
 
-	return c.serverSetup
+	return c.serverSetup, c.serverSetupError
 }
 
 var (
@@ -51,6 +50,10 @@ func Configurations() *configurations {
 	})
 
 	return config
+}
+
+func (c *configurations) ConfigRootDir() string {
+	return c.configDir
 }
 
 /*

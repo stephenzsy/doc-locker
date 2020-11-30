@@ -2,23 +2,28 @@ package configurations
 
 import "path"
 
-type listener struct {
+type ListenerConfig struct {
 	Address string `json:"address"`
 	Port    uint   `json:"port"`
 }
 
-type serverSetupConfiguration struct {
+type ServerSetupConfiguration struct {
 	data struct {
-		ServerListener listener `json:"serverListener"`
+		ServerListener ListenerConfig `json:"serverListener"`
+		ProxyListener  ListenerConfig `json:"proxyListener"`
 	}
 }
 
-func newSetupConfiguration(configDir string) *serverSetupConfiguration {
-	config := serverSetupConfiguration{}
-	loadConfigFromFile(path.Join(configDir, "setup", "server.json"), &config.data)
-	return &config
+func newSetupConfiguration(configDir string) (*ServerSetupConfiguration, error) {
+	config := ServerSetupConfiguration{}
+	err := loadConfigFromFile(path.Join(configDir, "setup", "server.json"), &config.data)
+	return &config, err
 }
 
-func (c *serverSetupConfiguration) ServerListener() *listener {
-	return &c.data.ServerListener
+func (c *ServerSetupConfiguration) ServerListener() ListenerConfig {
+	return c.data.ServerListener
+}
+
+func (c *ServerSetupConfiguration) ProxyListener() ListenerConfig {
+	return c.data.ProxyListener
 }

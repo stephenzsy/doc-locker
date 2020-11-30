@@ -1,0 +1,43 @@
+#!/bin/bash
+
+openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
+
+cat>{{{cnfPath}}}<<EOF
+[ req ]
+x509_extensions = v3_ca
+distinguished_name = req_distinguished_name
+prompt = no
+[ req_distinguished_name ]
+CN={{{subjectCn}}}
+[ v3_ca ]
+subjectKeyIdentifier=hash
+basicConstraints=critical,CA:true,pathlen:1
+keyUsage=critical,keyCertSign,cRLSign
+EOF
+
+openssl req \
+    -new -sha384 \
+    -x509 \
+    -set_serial {{{serial}}} \
+    -days 365 \
+    -config {{{cnfPath}}} \
+    -key {{{privateKeyPath}}} \
+    -out {{{certPath}}}
+
+yubico-piv-tool \
+    -a import-key \
+    -s {{{slot}}} \
+    -i {{{privateKeyPath}}} \
+    -k
+
+yubico-piv-tool \
+    -a import-certificate \
+    -s {{{slot}}} \
+    -i {{{certPath}}} \
+    -k
+
+yubico-piv-tool \
+    -a status \
+    -s {{{slot}}}
+
+rm {{{privateKeyPath}}}
