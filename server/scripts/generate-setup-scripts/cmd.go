@@ -106,7 +106,7 @@ func genKeyCert(
 		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s.pem", key)),
 		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
 		"rootCaPath":     path.Join(configDir, "setup", "ca-root.pem"),
-		"bundleCertPath": path.Join(configDir, "certs", fmt.Sprintf("key-cert-%s.pem", key)),
+		"bundleCertPath": path.Join(configDir, "certsk", fmt.Sprintf("key-cert-%s.pem", key)),
 		"libPaths": map[string]string{
 			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
 			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
@@ -116,6 +116,43 @@ func genKeyCert(
 		log.Fatal(e)
 	}
 	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-key-cert.sh", key)), []byte(rendered), 0755)
+	if e != nil {
+		log.Fatal(e)
+	}
+}
+
+func genAzureServicePrincipal(
+	key string,
+	configDir string,
+	templatesDir string,
+	certificateConfig configurations.CertificateConfig,
+	certSetupConfig configurations.ServerSetupCertificatesConfiguration,
+	caKey string,
+	caYubikeySlot configurations.YubikeySlotId,
+) {
+	templateFilename := path.Join(templatesDir, "generate-azure-service-principal_sh.mustache")
+
+	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
+		"csrCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-csr.cnf", key)),
+		"crtCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-crt.cnf", key)),
+		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s.csr", key)),
+		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-private-key.pem", key)),
+		"subjectCn":      certificateConfig.Subject.CN,
+		"serial":         certificateConfig.Serial,
+		"caPath":         path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caKey)),
+		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s.pem", key)),
+		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
+		"rootCaPath":     path.Join(configDir, "setup", "ca-root.pem"),
+		"bundleCertPath": path.Join(configDir, "certs", fmt.Sprintf("azure-service-principal-%s.pem", key)),
+		"libPaths": map[string]string{
+			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
+			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
+		},
+	})
+	if e != nil {
+		log.Fatal(e)
+	}
+	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-azure-service-principal.sh", key)), []byte(rendered), 0755)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -154,6 +191,16 @@ func main() {
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig.Keys.Deploy[0],
+		certificatesConfig,
+		"deploy",
+		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
+	)
+
+	genAzureServicePrincipal(
+		"deploy-azure-service-principal",
+		configDir,
+		serverConfigTemplatePath,
+		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,

@@ -50,6 +50,11 @@ type ServerSetupCertificatesConfiguration struct {
 	Keys struct {
 		Deploy []CertificateConfig `json:"deploy"`
 	} `json:"keys"`
+	Client struct {
+		Deploy struct {
+			AzureServicePrincipal []CertificateConfig `json:"azureServicePrincipal"`
+		} `json:"deploy"`
+	} `json:"client"`
 }
 
 type ServerSetupConfiguration struct {

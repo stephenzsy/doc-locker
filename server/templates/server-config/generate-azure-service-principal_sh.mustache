@@ -1,0 +1,48 @@
+#!/bin/bash
+
+openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
+
+cat>{{{csrCnfPath}}}<<EOF
+[ req ]
+distinguished_name = req_distinguished_name
+prompt = no
+[ req_distinguished_name ]
+CN={{{subjectCn}}}
+EOF
+
+cat>{{{crtCnfPath}}}<<EOF
+basicConstraints=critical,CA:false
+EOF
+
+# create CSR
+openssl req \
+    -new \
+    -sha384 \
+    -config {{{csrCnfPath}}} \
+    -key {{{privateKeyPath}}} \
+    -out {{{csrPath}}}
+
+openssl << EOF
+engine dynamic \
+    -pre SO_PATH:{{{libPaths.pkcs11}}} \
+    -pre ID:pkcs11 \
+    -pre LIST_ADD:1 \
+    -pre LOAD \
+    -pre MODULE_PATH:{{{libPaths.ykcs11}}} \
+    -pre VERBOSE
+x509 \
+    -engine pkcs11 \
+    -CAkeyform engine \
+    -CAkey slot_0-id_{{{pkcs11slotId}}} \
+    -sha384 \
+    -CA {{{caPath}}} \
+    -req \
+    -extfile {{{crtCnfPath}}} \
+    -days=365 \
+    -set_serial {{{serial}}} \
+    -in {{{csrPath}}} \
+    -out {{{certPath}}}
+EOF
+
+cat {{{certPath}}} {{{caPath}}} {{{rootCaPath}}} > {{{bundleCertPath}}}
+
