@@ -3,7 +3,6 @@ package configurations
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"sync"
 )
@@ -11,25 +10,38 @@ import (
 func loadConfigFromFile(filePath string, configData interface{}) error {
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	err = json.Unmarshal(bytes, configData)
 	return err
 }
 
+type runOnceUtil struct {
+	data interface{}
+	err  error
+	once sync.Once
+}
+
 type configurations struct {
-	configDir        string
-	serverSetup      *ServerSetupConfiguration
-	serverSetupError error
-	serverSetupOnce  sync.Once
+	configDir   string
+	serverSetup runOnceUtil
+	deployment  runOnceUtil
 }
 
 func (c *configurations) ServerSetup() (*ServerSetupConfiguration, error) {
-	c.serverSetupOnce.Do(func() {
-		c.serverSetup, c.serverSetupError = newSetupConfiguration(c.configDir)
+	c.serverSetup.once.Do(func() {
+		c.serverSetup.data, c.serverSetup.err = newSetupConfiguration(c.configDir)
 	})
 
-	return c.serverSetup, c.serverSetupError
+	return c.serverSetup.data.(*ServerSetupConfiguration), c.serverSetup.err
+}
+
+func (c *configurations) Deployment() (*DeploymentConfigurationFile, error) {
+	c.deployment.once.Do(func() {
+		c.deployment.data, c.deployment.err = newDeploymentConfiguration(c.configDir)
+	})
+
+	return c.deployment.data.(*DeploymentConfigurationFile), c.deployment.err
 }
 
 var (
