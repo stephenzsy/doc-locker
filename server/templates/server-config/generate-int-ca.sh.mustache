@@ -35,13 +35,13 @@ x509 \
     -engine pkcs11 \
     -CAkeyform engine \
     -CAkey slot_0-id_{{{pkcs11slotId}}} \
+    -CAcreateserial \
     -sha384 \
     -CA {{{caPath}}} \
     -req \
     -extensions v3_ca \
     -extfile {{{cnfPath}}} \
     -days=365 \
-    -set_serial {{{serial}}} \
     -in {{{csrPath}}} \
     -out {{{certPath}}}
 EOF

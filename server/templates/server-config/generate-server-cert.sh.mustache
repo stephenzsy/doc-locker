@@ -1,6 +1,6 @@
 #!/bin/bash
 
-openssl genrsa -out {{{privateKeyPath}}} 3072
+openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
 
 cat>{{{csrCnfPath}}}<<EOF
 [ req ]
@@ -12,7 +12,8 @@ EOF
 
 cat>{{{crtCnfPath}}}<<EOF
 basicConstraints=critical,CA:false
-keyUsage=dataEncipherment
+keyUsage=critical,keyEncipherment
+extendedKeyUsage=critical,serverAuth
 EOF
 
 # create CSR
@@ -23,7 +24,7 @@ openssl req \
     -key {{{privateKeyPath}}} \
     -out {{{csrPath}}}
 
-openssl << EOF
+openssl <<EOF
 engine dynamic \
     -pre SO_PATH:{{{libPaths.pkcs11}}} \
     -pre ID:pkcs11 \
@@ -37,14 +38,13 @@ x509 \
     -CAkey slot_0-id_{{{pkcs11slotId}}} \
     -sha384 \
     -CA {{{caPath}}} \
+    -CAcreateserial \
     -req \
     -extfile {{{crtCnfPath}}} \
     -days=365 \
-    -set_serial {{{serial}}} \
     -in {{{csrPath}}} \
     -out {{{certPath}}}
 EOF
 
-cat {{{privateKeyPath}}} {{{certPath}}} {{{caPath}}} {{{rootCaPath}}} > {{{bundleCertPath}}}
-rm {{{certPath}}} {{{privateKeyPath}}}
-
+cat {{{certPath}}} {{{caPath}}} {{{rootCaPath}}} > {{{bundleCertPath}}}
+mv {{{privateKeyPath}}} {{{configPrivateKeyPath}}}

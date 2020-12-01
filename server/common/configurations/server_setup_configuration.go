@@ -53,14 +53,17 @@ type ServerSetupCertificatesConfiguration struct {
 	Client struct {
 		Deploy struct {
 			AzureServicePrincipal []CertificateConfig `json:"azureServicePrincipal"`
+			SdsServer             []CertificateConfig `json:"sdsServer"`
+			SdsClient             []CertificateConfig `json:"sdsClient"`
 		} `json:"deploy"`
 	} `json:"client"`
 }
 
 type ServerSetupConfiguration struct {
 	data struct {
-		ServerListener ListenerConfig                       `json:"serverListener"`
 		ProxyListener  ListenerConfig                       `json:"proxyListener"`
+		ServerListener ListenerConfig                       `json:"serverListener"`
+		SdsListener    ListenerConfig                       `json:"sdsListener"`
 		Certificates   ServerSetupCertificatesConfiguration `json:"certificates"`
 	}
 }
@@ -77,6 +80,10 @@ func (c *ServerSetupConfiguration) ServerListener() ListenerConfig {
 
 func (c *ServerSetupConfiguration) ProxyListener() ListenerConfig {
 	return c.data.ProxyListener
+}
+
+func (c *ServerSetupConfiguration) SdsListener() ListenerConfig {
+	return c.data.SdsListener
 }
 
 func (c *ServerSetupConfiguration) Certificates() ServerSetupCertificatesConfiguration {

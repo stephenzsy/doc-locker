@@ -6,34 +6,17 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/cbroglie/mustache"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 )
-
-func genEnvoy(configDir string, templatesDir string, serverSetupConfig *configurations.ServerSetupConfiguration) {
-	ldsYamlTemplateFilename := path.Join(templatesDir, "lds_yaml.mustache")
-	proxyListnerConfig := serverSetupConfig.ProxyListener()
-	rendered, e := mustache.RenderFile(ldsYamlTemplateFilename, map[string]string{
-		"listenerAddress": proxyListnerConfig.Address,
-		"listenerPort":    strconv.Itoa(int(proxyListnerConfig.Port)),
-	})
-	if e != nil {
-		log.Fatal(e)
-	}
-	e = ioutil.WriteFile(path.Join(configDir, "envoy", "lds.yaml"), []byte(rendered), 0644)
-	if e != nil {
-		log.Fatal(e)
-	}
-}
 
 func genRootCa(
 	configDir string,
 	templatesDir string,
 	caCertificateConfig configurations.YubikeyStoredCertificateConfiguration) {
 
-	templateFilename := path.Join(templatesDir, "generate-root-ca_sh.mustache")
+	templateFilename := path.Join(templatesDir, "generate-root-ca.sh.mustache")
 
 	rendered, e := mustache.RenderFile(templateFilename, map[string]string{
 		"slot":           string(caCertificateConfig.Yubikey.Slot),
@@ -58,7 +41,7 @@ func genIntermediateCa(
 	templatesDir string,
 	certSetupConfig configurations.ServerSetupCertificatesConfiguration,
 	caCertificateConfig configurations.YubikeyStoredCertificateConfiguration) {
-	templateFilename := path.Join(templatesDir, "generate-int-ca_sh.mustache")
+	templateFilename := path.Join(templatesDir, "generate-int-ca.sh.mustache")
 
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
 		"slot":           string(caCertificateConfig.Yubikey.Slot),
@@ -66,7 +49,6 @@ func genIntermediateCa(
 		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("ca-%s.csr", key)),
 		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("ca-%s-private-key.pem", key)),
 		"subjectCn":      caCertificateConfig.Subject.CN,
-		"serial":         caCertificateConfig.Serial,
 		"caPath":         path.Join(configDir, "setup", "ca-root.pem"),
 		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", key)),
 		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(certSetupConfig.Ca.Root[0].Yubikey.Slot),
@@ -84,44 +66,35 @@ func genIntermediateCa(
 	}
 }
 
-func genKeyCert(
+func genKeyPair(
 	key string,
 	configDir string,
 	templatesDir string,
-	certificateConfig configurations.CertificateConfig,
-	certSetupConfig configurations.ServerSetupCertificatesConfiguration,
-	caKey string,
-	caYubikeySlot configurations.YubikeySlotId,
 ) {
-	templateFilename := path.Join(templatesDir, "generate-key-cert_sh.mustache")
+	templateFilename := path.Join(templatesDir, "generate-key-pair.sh.mustache")
 
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
-		"csrCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s-csr.cnf", key)),
-		"crtCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s-crt.cnf", key)),
-		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s.csr", key)),
-		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s-private-key.pem", key)),
-		"subjectCn":      certificateConfig.Subject.CN,
-		"serial":         certificateConfig.Serial,
-		"caPath":         path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caKey)),
-		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("key-cert-%s.pem", key)),
-		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
-		"rootCaPath":     path.Join(configDir, "setup", "ca-root.pem"),
-		"bundleCertPath": path.Join(configDir, "certsk", fmt.Sprintf("key-cert-%s.pem", key)),
-		"libPaths": map[string]string{
-			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
-			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
-		},
+		"privateKeyPath": path.Join(configDir, "keypairs", fmt.Sprintf("key-%s.pem", key)),
 	})
 	if e != nil {
 		log.Fatal(e)
 	}
-	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-key-cert.sh", key)), []byte(rendered), 0755)
+	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-key-pair.sh", key)), []byte(rendered), 0755)
 	if e != nil {
 		log.Fatal(e)
 	}
 }
 
-func genAzureServicePrincipal(
+type Algorithm string
+
+var (
+	rsa   Algorithm = "rsa"
+	ecdsa Algorithm = "ecdsa"
+)
+
+func genEndCert(
+	algorithm Algorithm,
+	certType string,
 	key string,
 	configDir string,
 	templatesDir string,
@@ -130,20 +103,23 @@ func genAzureServicePrincipal(
 	caKey string,
 	caYubikeySlot configurations.YubikeySlotId,
 ) {
-	templateFilename := path.Join(templatesDir, "generate-azure-service-principal_sh.mustache")
+	templateFilename := path.Join(templatesDir, fmt.Sprintf("generate-%s-cert.sh.mustache", certType))
 
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
-		"csrCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-csr.cnf", key)),
-		"crtCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-crt.cnf", key)),
-		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s.csr", key)),
-		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s-private-key.pem", key)),
-		"subjectCn":      certificateConfig.Subject.CN,
-		"serial":         certificateConfig.Serial,
-		"caPath":         path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caKey)),
-		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("azure-service-principal-%s.pem", key)),
-		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
-		"rootCaPath":     path.Join(configDir, "setup", "ca-root.pem"),
-		"bundleCertPath": path.Join(configDir, "certs", fmt.Sprintf("azure-service-principal-%s.pem", key)),
+		"useRsa":               algorithm == rsa,
+		"useEcdsa":             algorithm == ecdsa,
+		"csrCnfPath":           path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-csr.cnf", certType, key)),
+		"crtCnfPath":           path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-crt.cnf", certType, key)),
+		"csrPath":              path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s.csr", certType, key)),
+		"privateKeyPath":       path.Join(configDir, "setup", fmt.Sprintf("%s-key-%s.pem", certType, key)),
+		"subjectCn":            certificateConfig.Subject.CN,
+		"serial":               certificateConfig.Serial,
+		"caPath":               path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caKey)),
+		"certPath":             path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", certType, key)),
+		"pkcs11slotId":         configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
+		"rootCaPath":           path.Join(configDir, "setup", "ca-root.pem"),
+		"bundleCertPath":       path.Join(configDir, "certs", fmt.Sprintf("%s-cert-%s.pem", certType, key)),
+		"configPrivateKeyPath": path.Join(configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", certType, key)),
 		"libPaths": map[string]string{
 			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
 			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
@@ -152,7 +128,7 @@ func genAzureServicePrincipal(
 	if e != nil {
 		log.Fatal(e)
 	}
-	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-azure-service-principal.sh", key)), []byte(rendered), 0755)
+	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-cert-%s.sh", certType, key)), []byte(rendered), 0755)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -169,11 +145,6 @@ func main() {
 		log.Fatal(e)
 	}
 	configDir := configurations.Configurations().ConfigRootDir()
-	genEnvoy(
-		configDir,
-		serverConfigTemplatePath,
-		serverSetupConfig)
-
 	certificatesConfig := serverSetupConfig.Certificates()
 	genRootCa(
 		configDir,
@@ -186,21 +157,41 @@ func main() {
 		certificatesConfig,
 		certificatesConfig.Ca.Deploy[0])
 
-	genKeyCert(
-		"deploy-cipher",
+	genKeyPair(
+		"deploy",
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Keys.Deploy[0],
+	)
+
+	genEndCert(
+		ecdsa,
+		"client",
+		"deploy-azure-service-principal",
+		configDir,
+		serverConfigTemplatePath,
+		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
 	)
-
-	genAzureServicePrincipal(
-		"deploy",
+	genEndCert(
+		ecdsa,
+		"server",
+		"deploy-sds",
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
+		certificatesConfig.Client.Deploy.SdsServer[0],
+		certificatesConfig,
+		"deploy",
+		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
+	)
+	genEndCert(
+		rsa,
+		"client",
+		"deploy-sds",
+		configDir,
+		serverConfigTemplatePath,
+		certificatesConfig.Client.Deploy.SdsClient[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,

@@ -20,9 +20,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+	sdsLis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 12000))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	hostService.RegisterHostServiceServer(grpcServer, &host.HostServiceServer{})
-	secretservice.RegisterSecretDiscoveryServiceServer(grpcServer, &sds.Server{})
+	sdsGrpcServer := grpc.NewServer(opts...)
+	secretservice.RegisterSecretDiscoveryServiceServer(sdsGrpcServer, &sds.Server{})
 	grpcServer.Serve(lis)
+	sdsGrpcServer.Serve(sdsLis)
 }
