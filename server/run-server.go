@@ -8,14 +8,11 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/stephenzsy/doc-locker/server/gen/host"
+	secretservice "github.com/envoyproxy/go-control-plane/envoy/service/secret/v3"
+	hostService "github.com/stephenzsy/doc-locker/server/gen/host"
 	"github.com/stephenzsy/doc-locker/server/host"
+	"github.com/stephenzsy/doc-locker/server/sds"
 )
-
-func newServer() *host.HostServiceServer {
-	s := &host.HostServiceServer{}
-	return s
-}
 
 func main() {
 	flag.Parse()
@@ -25,6 +22,7 @@ func main() {
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterHostServiceServer(grpcServer, newServer())
+	hostService.RegisterHostServiceServer(grpcServer, &host.HostServiceServer{})
+	secretservice.RegisterSecretDiscoveryServiceServer(grpcServer, &sds.Server{})
 	grpcServer.Serve(lis)
 }

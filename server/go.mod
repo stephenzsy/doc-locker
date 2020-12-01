@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/cbroglie/mustache v1.2.0
+	github.com/envoyproxy/go-control-plane v0.9.4
 	github.com/golang/protobuf v1.4.3
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect

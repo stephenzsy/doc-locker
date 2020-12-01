@@ -197,7 +197,7 @@ func main() {
 	)
 
 	genAzureServicePrincipal(
-		"deploy-azure-service-principal",
+		"deploy",
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
