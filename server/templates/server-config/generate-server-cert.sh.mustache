@@ -1,6 +1,11 @@
 #!/bin/bash
 
+{{#useRsa}}
+openssl genrsa -out {{{privateKeyPath}}} 3072
+{{/useRsa}}
+{{#useEcdsa}}
 openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
+{{/useEcdsa}}
 
 cat>{{{csrCnfPath}}}<<EOF
 [ req ]

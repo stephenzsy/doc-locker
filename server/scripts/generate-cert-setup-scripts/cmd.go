@@ -175,7 +175,7 @@ func main() {
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
 	)
 	genEndCert(
-		ecdsa,
+		rsa,
 		"server",
 		"deploy-sds",
 		configDir,
