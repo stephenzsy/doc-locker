@@ -94,8 +94,8 @@ var (
 
 func genEndCert(
 	algorithm Algorithm,
-	certType string,
-	key string,
+	certType configurations.SecretType,
+	key configurations.SecretName,
 	configDir string,
 	templatesDir string,
 	certificateConfig configurations.CertificateConfig,
@@ -118,8 +118,8 @@ func genEndCert(
 		"certPath":             path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", certType, key)),
 		"pkcs11slotId":         configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
 		"rootCaPath":           path.Join(configDir, "setup", "ca-root.pem"),
-		"bundleCertPath":       path.Join(configDir, "certs", fmt.Sprintf("%s-cert-%s.pem", certType, key)),
-		"configPrivateKeyPath": path.Join(configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", certType, key)),
+		"bundleCertPath":       configurations.Configurations().SecretsConfiguration().GetCertPath(certType, key),
+		"configPrivateKeyPath": configurations.Configurations().SecretsConfiguration().GetPrivateKeyPath(certType, key),
 		"libPaths": map[string]string{
 			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
 			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
@@ -165,8 +165,8 @@ func main() {
 
 	genEndCert(
 		ecdsa,
-		"client",
-		"deploy-azure-service-principal",
+		configurations.SecretTypeClient,
+		configurations.SecretNameDeployAzureServicePrincipal,
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
@@ -176,8 +176,8 @@ func main() {
 	)
 	genEndCert(
 		rsa,
-		"server",
-		"deploy-sds",
+		configurations.SecretTypeServer,
+		configurations.SecretNameDeploySds,
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig.Client.Deploy.SdsServer[0],
@@ -187,8 +187,8 @@ func main() {
 	)
 	genEndCert(
 		rsa,
-		"client",
-		"deploy-sds",
+		configurations.SecretTypeClient,
+		configurations.SecretNameDeploySds,
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig.Client.Deploy.SdsClient[0],

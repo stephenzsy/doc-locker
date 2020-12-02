@@ -9,14 +9,14 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"log"
-	"path"
 
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 	"github.com/stephenzsy/doc-locker/server/common/security"
 )
 
 func UpdateEncryptionMaterial(c *configurations.DeploymentConfigurationFile, configRootDir string) (*rsa.PrivateKey, error) {
-	certContent, err := ioutil.ReadFile(path.Join(configRootDir, "certsk", "key-cert-deploy-cipher.pem"))
+	certContent, err := ioutil.ReadFile(
+		configurations.Configurations().SecretsConfiguration().GetKeyPairPath(configurations.SecretNameDeploy))
 	privateKeyPemBlock, certContent := pem.Decode(certContent)
 	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyPemBlock.Bytes)
 	encryptionKey, err := security.GenerateAes256Key()
@@ -28,7 +28,10 @@ func UpdateAzureServicePrincipal(
 	c *configurations.DeploymentConfigurationFile,
 	configRootDir string,
 	privateKey *rsa.PrivateKey) error {
-	certContent, err := ioutil.ReadFile(path.Join(configRootDir, "certs", "azure-service-principal-deploy.pem"))
+	certContent, err := ioutil.ReadFile(
+		configurations.Configurations().SecretsConfiguration().GetCertPath(
+			configurations.SecretTypeClient,
+			configurations.SecretNameDeployAzureServicePrincipal))
 	if err != nil {
 		return err
 	}
@@ -60,7 +63,10 @@ func UpdateAzureServicePrincipal(
 		return err
 	}
 
-	servicePrincipalPrivateKeyContent, err := ioutil.ReadFile(path.Join(configRootDir, "setup", "azure-service-principal-deploy-private-key.pem"))
+	servicePrincipalPrivateKeyContent, err := ioutil.ReadFile(
+		configurations.Configurations().SecretsConfiguration().GetPrivateKeyPath(
+			configurations.SecretTypeClient,
+			configurations.SecretNameDeployAzureServicePrincipal))
 	if err != nil {
 		return err
 	}

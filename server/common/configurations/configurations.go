@@ -23,9 +23,10 @@ type runOnceUtil struct {
 }
 
 type configurations struct {
-	configDir   string
-	serverSetup runOnceUtil
-	deployment  runOnceUtil
+	configDir     string
+	serverSetup   runOnceUtil
+	deployment    runOnceUtil
+	secertsConfig SecretsConfiguration
 }
 
 func (c *configurations) ServerSetup() (*ServerSetupConfiguration, error) {
@@ -44,6 +45,10 @@ func (c *configurations) Deployment() (*DeploymentConfigurationFile, error) {
 	return c.deployment.data.(*DeploymentConfigurationFile), c.deployment.err
 }
 
+func (c *configurations) SecretsConfiguration() *SecretsConfiguration {
+	return &c.secertsConfig
+}
+
 var (
 	config     *configurations
 	configOnce sync.Once
@@ -53,6 +58,9 @@ func newConfigurations() *configurations {
 	configDir := os.Getenv("DOCLOCKER_CONFIG_DIR")
 	return &configurations{
 		configDir: configDir,
+		secertsConfig: SecretsConfiguration{
+			configDir: configDir,
+		},
 	}
 }
 
