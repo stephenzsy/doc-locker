@@ -3,9 +3,14 @@ module github.com/stephenzsy/doc-locker/server
 go 1.15
 
 require (
+	github.com/Azure/azure-sdk-for-go v49.0.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.11.13 // indirect
+	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.3.0 // indirect
 	github.com/cbroglie/mustache v1.2.0
 	github.com/envoyproxy/go-control-plane v0.9.7
 	github.com/golang/protobuf v1.4.3
+	github.com/pelletier/go-toml v1.3.0 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect
 	golang.org/x/text v0.3.4 // indirect

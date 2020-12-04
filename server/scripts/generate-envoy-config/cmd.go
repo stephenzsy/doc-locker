@@ -10,8 +10,10 @@ import (
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 )
 
-func genEnvoy(configDir string, templatesDir string, serverSetupConfig *configurations.ServerSetupConfiguration) {
+func genEnvoy(templatesDir string, serverSetupConfig *configurations.ServerSetupConfiguration) {
 	templateFilename := path.Join(templatesDir, "envoy.yaml.mustache")
+	configs := configurations.Configurations()
+	configDir := configs.ConfigRootDir()
 	rendered, e := mustache.RenderFile(templateFilename, map[string]interface{}{
 		"sdsServer": map[string]interface{}{
 			"address":   serverSetupConfig.SdsListener().Address,
@@ -26,8 +28,9 @@ func genEnvoy(configDir string, templatesDir string, serverSetupConfig *configur
 			"portValue": serverSetupConfig.ServerListener().Port,
 		},
 		"proxy": map[string]interface{}{
-			"address":   serverSetupConfig.ProxyListener().Address,
-			"portValue": serverSetupConfig.ProxyListener().Port,
+			"address":     serverSetupConfig.ProxyListener().Address,
+			"portValue":   serverSetupConfig.ProxyListener().Port,
+			"sdsCertName": configurations.SdsSecretNameProxyServer,
 		},
 	})
 	if e != nil {
@@ -49,9 +52,7 @@ func main() {
 	if e != nil {
 		log.Fatal(e)
 	}
-	configDir := configurations.Configurations().ConfigRootDir()
 	genEnvoy(
-		configDir,
 		serverConfigTemplatePath,
 		serverSetupConfig)
 }

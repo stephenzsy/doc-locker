@@ -1,11 +1,10 @@
 package configurations
 
 import (
+	"errors"
 	"fmt"
 	"path"
 )
-
-type SecretName string
 
 type SecretType string
 
@@ -14,11 +13,28 @@ const (
 	SecretTypeServer            = "server"
 )
 
+type SecretName string
+
 const (
 	SecretNameDeploy                      SecretName = "deploy"
 	SecretNameDeployAzureServicePrincipal            = "deploy-azure-service-principal"
 	SecretNameDeploySds                              = "deploy-sds"
 )
+
+type SdsSecretName string
+
+const (
+	sdsSecretNameUnknown     SdsSecretName = "unknown"
+	SdsSecretNameProxyServer SdsSecretName = "proxy_server"
+)
+
+func SdsSecretNameFromString(str string) (SdsSecretName, error) {
+	switch str {
+	case string(SdsSecretNameProxyServer):
+		return SdsSecretNameProxyServer, nil
+	}
+	return sdsSecretNameUnknown, errors.New("Invalid SdsSecretName: " + str)
+}
 
 type SecretsConfiguration struct {
 	configDir string

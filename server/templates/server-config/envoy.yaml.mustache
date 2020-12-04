@@ -76,7 +76,7 @@ static_resources:
             "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
             common_tls_context:
               tls_certificate_sds_secret_configs:
-                - name: server_cert
+                - name: {{{proxy.sdsCertName}}}
                   sds_config:
                     api_config_source:
                       api_type: GRPC
