@@ -164,7 +164,7 @@ func main() {
 	)
 
 	genEndCert(
-		ecdsa,
+		rsa,
 		configurations.SecretTypeClient,
 		configurations.SecretNameDeployAzureServicePrincipal,
 		configDir,

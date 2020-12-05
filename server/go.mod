@@ -4,7 +4,8 @@ go 1.15
 
 require (
 	github.com/Azure/azure-sdk-for-go v49.0.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.11.13 // indirect
+	github.com/Azure/go-autorest/autorest v0.11.13
+	github.com/Azure/go-autorest/autorest/adal v0.9.5
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.0 // indirect
 	github.com/cbroglie/mustache v1.2.0

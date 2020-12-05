@@ -60,7 +60,11 @@ type ServerSetupCertificatesConfiguration struct {
 }
 
 type ServerSetupCloudAzureConfiguration struct {
-	KeyVaultBaseUrl string `json:"keyVaultBaseUrl"`
+	AadOauthEndpoint    string `json:"aadOauthEndpoint"`
+	AadResourceKeyVault string `json:"aadResourceKeyVault"`
+	AadTenantId         string `json:"aadTenantId"`
+	ApplicationId       string `json:"applicationId"`
+	KeyVaultBaseUrl     string `json:"keyVaultBaseUrl"`
 }
 
 type ServerSetupCloudConfiguration struct {

@@ -33,7 +33,7 @@ func updateAzureConfigurations(
 	if err != nil {
 		return
 	}
-	c.Cloud.Azure.KeyVaultBaseUrl = serverSetupConfig.Cloud.Azure.KeyVaultBaseUrl
+	c.Cloud.Azure.ServerSetupCloudAzureConfiguration = serverSetupConfig.Cloud.Azure
 
 	// service principal
 	secretsConfiguration := configurations.Configurations().SecretsConfiguration()
@@ -81,7 +81,7 @@ func updateAzureConfigurations(
 		return err
 	}
 	pemBlock, certContent = pem.Decode(servicePrincipalPrivateKeyContent)
-	_, err = x509.ParseECPrivateKey(pemBlock.Bytes)
+	_, err = x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 	if err != nil {
 		return err
 	}

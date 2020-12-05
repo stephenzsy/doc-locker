@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"sync"
 	"time"
 
 	"github.com/stephenzsy/doc-locker/server/common/security"
@@ -19,9 +18,9 @@ type DeploymentConfiguration interface {
 }
 
 type DeploymentCloudConfigurationAzurePublic struct {
+	ServerSetupCloudAzureConfiguration
 	ServicePrincipalThumbprint       HexString `json:"servicePrincipalThumbprint"`
 	ServicePrincipalCertificateChain [][]byte  `json:"servicePrincipalCertificateChain"`
-	KeyVaultBaseUrl                  string    `json:"keyVaultBaseUrl"`
 }
 
 type DeploymentCloudConfigurationPublic struct {
@@ -41,7 +40,6 @@ type DeploymentConfigurationFile struct {
 	SigningThumbprint   []byte `json:"signingThumbprint"`
 	Siganature          []byte `json:"signature"`
 	SecretSiganature    []byte `json:"secretSignature"`
-	lockingMu           sync.Mutex
 }
 
 type DeploymentCloudConfigurationAzurePrivate struct {
@@ -66,9 +64,6 @@ func newDeploymentConfiguration(configDir string) (*DeploymentConfigurationFile,
 }
 
 func (c *DeploymentConfigurationFile) GetPrivateConfig(privateKey *rsa.PrivateKey) (privateConfig DeploymentConfigurationPrivate, encryptionKey []byte, err error) {
-	c.lockingMu.Lock()
-	defer c.lockingMu.Unlock()
-
 	encryptionKey, err = rsa.DecryptOAEP(sha512.New384(), rand.Reader, privateKey, c.EncryptionMaterial.EncryptedKey, []byte{})
 	if err != nil {
 		return
@@ -86,8 +81,6 @@ func (c *DeploymentConfigurationFile) GetPrivateConfig(privateKey *rsa.PrivateKe
 }
 
 func (c *DeploymentConfigurationFile) SetPrivateConfig(publicKey *rsa.PublicKey, encryptionKey []byte, privateConfig DeploymentConfigurationPrivate) (err error) {
-	c.lockingMu.Lock()
-	defer c.lockingMu.Unlock()
 	content, err := json.Marshal(privateConfig)
 	if err != nil {
 		return
