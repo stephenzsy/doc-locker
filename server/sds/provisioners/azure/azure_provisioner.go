@@ -23,17 +23,22 @@ type provisioner struct {
 	vaultBaseUrl string
 }
 
-func NewAzureCertificatesProvisioner() *provisioner {
-	p := provisioner{
-		client: getClient(),
+func NewAzureCertificatesProvisioner() (p *provisioner, err error) {
+	configs, err := configurations.Configurations().Deployment()
+	if err != nil {
+		return
 	}
-	return &p
+	p = &provisioner{
+		client:       getClient(),
+		vaultBaseUrl: configs.Cloud.Azure.KeyVaultBaseUrl,
+	}
+	return
 }
 
-func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context, name configurations.SdsSecretName) error {
+func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context, name configurations.SdsSecretName) (err error) {
 	result, err := p.client.GetCertificate(ctx, p.vaultBaseUrl, sdsToAzureCertName[name], "")
 	if err != nil {
-		return err
+		return
 	}
 	if !(*result.Policy.KeyProperties.Exportable) {
 		return errors.New("Certificate not exportable")
@@ -42,7 +47,7 @@ func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context, name c
 	derBytes := result.Cer
 	_, err = x509.ParseCertificate(*derBytes)
 	if err != nil {
-		return err
+		return
 	}
-	return err
+	return
 }

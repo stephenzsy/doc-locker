@@ -17,11 +17,15 @@ type server struct {
 	certProvisioner sds_provisioner.CertificatesProvisioner
 }
 
-func NewServer(ctx context.Context) server {
-	s := server{
-		certProvisioner: sds_provisioner_azure.NewAzureCertificatesProvisioner(),
+func NewServer(ctx context.Context) (s server, err error) {
+	certProvisioner, err := sds_provisioner_azure.NewAzureCertificatesProvisioner()
+	if err != nil {
+		return
 	}
-	return s
+	s = server{
+		certProvisioner: certProvisioner,
+	}
+	return
 }
 
 func (*server) DeltaSecrets(_ secretservice.SecretDiscoveryService_DeltaSecretsServer) error {
@@ -80,16 +84,18 @@ func (s *server) StreamSecrets(stream secretservice.SecretDiscoveryService_Strea
 			}
 
 			for _, name := range r.ResourceNames {
-
 				secretName, err := configurations.SdsSecretNameFromString(name)
 				if err != nil {
-					errCh <- err
+					return err
 				}
 
 				err = s.certProvisioner.FetchCertificateWithPrivateKey(ctx, secretName)
+				if err != nil {
+					return err
+				}
 			}
-		case err := <-errCh:
-			return err
+		case err = <-errCh:
+			return
 		}
 	}
 }

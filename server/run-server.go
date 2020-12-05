@@ -21,7 +21,7 @@ var (
 	sdsFlag = flag.Bool("sds", false, "Run SDS server")
 )
 
-func serveSds() {
+func serveSds() (err error) {
 	flag.Parse()
 
 	// Create a cache
@@ -42,15 +42,18 @@ func serveSds() {
 	sdsOpts := []grpc.ServerOption{grpc.Creds(creds)}
 
 	sdsGrpcServer := grpc.NewServer(sdsOpts...)
-	server := sds.NewServer(ctx)
+	server, err := sds.NewServer(ctx)
 	secretservice.RegisterSecretDiscoveryServiceServer(sdsGrpcServer, &server)
 	sdsGrpcServer.Serve(sdsLis)
+	return err
 }
 
 func main() {
 	flag.Parse()
 	if *sdsFlag {
-		serveSds()
+		if err := serveSds(); err != nil {
+			log.Panic(err)
+		}
 		return
 	}
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 11000))

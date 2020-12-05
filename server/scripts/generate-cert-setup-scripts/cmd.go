@@ -145,7 +145,7 @@ func main() {
 		log.Fatal(e)
 	}
 	configDir := configurations.Configurations().ConfigRootDir()
-	certificatesConfig := serverSetupConfig.Certificates()
+	certificatesConfig := serverSetupConfig.Certificates
 	genRootCa(
 		configDir,
 		serverConfigTemplatePath,

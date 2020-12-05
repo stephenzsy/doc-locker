@@ -59,33 +59,24 @@ type ServerSetupCertificatesConfiguration struct {
 	} `json:"client"`
 }
 
+type ServerSetupCloudAzureConfiguration struct {
+	KeyVaultBaseUrl string `json:"keyVaultBaseUrl"`
+}
+
+type ServerSetupCloudConfiguration struct {
+	Azure ServerSetupCloudAzureConfiguration `json:"azure"`
+}
+
 type ServerSetupConfiguration struct {
-	data struct {
-		ProxyListener  ListenerConfig                       `json:"proxyListener"`
-		ServerListener ListenerConfig                       `json:"serverListener"`
-		SdsListener    ListenerConfig                       `json:"sdsListener"`
-		Certificates   ServerSetupCertificatesConfiguration `json:"certificates"`
-	}
+	ProxyListener  ListenerConfig                       `json:"proxyListener"`
+	ServerListener ListenerConfig                       `json:"serverListener"`
+	SdsListener    ListenerConfig                       `json:"sdsListener"`
+	Certificates   ServerSetupCertificatesConfiguration `json:"certificates"`
+	Cloud          ServerSetupCloudConfiguration        `json:"cloud"`
 }
 
 func newSetupConfiguration(configDir string) (*ServerSetupConfiguration, error) {
 	config := ServerSetupConfiguration{}
-	err := loadConfigFromFile(path.Join(configDir, "setup", "server.json"), &config.data)
+	err := loadConfigFromFile(path.Join(configDir, "setup", "server.json"), &config)
 	return &config, err
-}
-
-func (c *ServerSetupConfiguration) ServerListener() ListenerConfig {
-	return c.data.ServerListener
-}
-
-func (c *ServerSetupConfiguration) ProxyListener() ListenerConfig {
-	return c.data.ProxyListener
-}
-
-func (c *ServerSetupConfiguration) SdsListener() ListenerConfig {
-	return c.data.SdsListener
-}
-
-func (c *ServerSetupConfiguration) Certificates() ServerSetupCertificatesConfiguration {
-	return c.data.Certificates
 }

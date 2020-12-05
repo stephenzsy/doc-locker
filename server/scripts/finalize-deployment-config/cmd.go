@@ -24,25 +24,35 @@ func UpdateEncryptionMaterial(c *configurations.DeploymentConfigurationFile, con
 	return privateKey, err
 }
 
-func UpdateAzureServicePrincipal(
+func updateAzureConfigurations(
 	c *configurations.DeploymentConfigurationFile,
 	configRootDir string,
-	privateKey *rsa.PrivateKey) error {
+	privateKey *rsa.PrivateKey) (err error) {
+
+	serverSetupConfig, err := configurations.Configurations().ServerSetup()
+	if err != nil {
+		return
+	}
+	c.Cloud.Azure.KeyVaultBaseUrl = serverSetupConfig.Cloud.Azure.KeyVaultBaseUrl
+
+	// service principal
+	secretsConfiguration := configurations.Configurations().SecretsConfiguration()
+
 	certContent, err := ioutil.ReadFile(
-		configurations.Configurations().SecretsConfiguration().GetCertPath(
+		secretsConfiguration.GetCertPath(
 			configurations.SecretTypeClient,
 			configurations.SecretNameDeployAzureServicePrincipal))
 	if err != nil {
-		return err
+		return
 	}
 	pemBlock, certContent := pem.Decode(certContent)
 	certificate, err := x509.ParseCertificate(pemBlock.Bytes)
 	if err != nil {
-		return err
+		return
 	}
 	thumbprint := sha1.Sum(certificate.Raw)
-	c.Cloud.AzureServicePrincipalThumbprint = thumbprint[:]
-	var certificatesChain []configurations.Base64String
+	c.Cloud.Azure.ServicePrincipalThumbprint = thumbprint[:]
+	var certificatesChain [][]byte
 	for certificate != nil {
 		certificatesChain = append(certificatesChain, certificate.Raw)
 		pemBlock, certContent = pem.Decode(certContent)
@@ -54,7 +64,7 @@ func UpdateAzureServicePrincipal(
 			return err
 		}
 	}
-	c.Cloud.AzureServicePrincipalCertificateChain = certificatesChain
+	c.Cloud.Azure.ServicePrincipalCertificateChain = certificatesChain
 
 	// private configuration
 
@@ -64,7 +74,7 @@ func UpdateAzureServicePrincipal(
 	}
 
 	servicePrincipalPrivateKeyContent, err := ioutil.ReadFile(
-		configurations.Configurations().SecretsConfiguration().GetPrivateKeyPath(
+		secretsConfiguration.GetPrivateKeyPath(
 			configurations.SecretTypeClient,
 			configurations.SecretNameDeployAzureServicePrincipal))
 	if err != nil {
@@ -75,10 +85,11 @@ func UpdateAzureServicePrincipal(
 	if err != nil {
 		return err
 	}
-	privateConfig.Cloud.AzureServicePrincipalPrivateKey = pemBlock.Bytes
+	privateConfig.Cloud.Azure.ServicePrincipalPrivateKey = pemBlock.Bytes
 	c.SetPrivateConfig(&privateKey.PublicKey, encryptionKey, privateConfig)
 
-	return nil
+	c.Version = 1
+	return
 }
 
 func main() {
@@ -94,7 +105,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = UpdateAzureServicePrincipal(deploymentConfig, configRootDir, privateKey)
+		err = updateAzureConfigurations(deploymentConfig, configRootDir, privateKey)
 		if err != nil {
 			log.Fatal(err)
 		}
