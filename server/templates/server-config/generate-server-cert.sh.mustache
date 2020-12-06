@@ -11,13 +11,25 @@ cat>{{{csrCnfPath}}}<<EOF
 [ req ]
 distinguished_name = req_distinguished_name
 prompt = no
+req_extensions     = req_ext
 [ req_distinguished_name ]
 CN={{{subjectCn}}}
+[ req_ext ]
+subjectAltName = @alt_names
+[ alt_names ]
+{{#sans.ips}}
+IP.{{{index}}} = {{{value}}}
+{{/sans.ips}}
 EOF
 
 cat>{{{crtCnfPath}}}<<EOF
 basicConstraints=critical,CA:false
-keyUsage=critical,keyEncipherment
+{{#useRsa}}
+keyUsage=critical,keyEncipherment,digitalSignature
+{{/useRsa}}
+{{#useEcdsa}}
+keyUsage=critical,keyAgreement,digitalSignature
+{{/useEcdsa}}
 extendedKeyUsage=critical,serverAuth
 EOF
 

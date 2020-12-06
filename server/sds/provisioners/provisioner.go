@@ -7,5 +7,5 @@ import (
 )
 
 type CertificatesProvisioner interface {
-	FetchCertificateWithPrivateKey(context.Context, configurations.SdsSecretName) error
+	FetchCertificateWithPrivateKey(context.Context, configurations.SecretType, configurations.SecretName) error
 }

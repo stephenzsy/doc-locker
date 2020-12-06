@@ -105,6 +105,17 @@ func genEndCert(
 ) {
 	templateFilename := path.Join(templatesDir, fmt.Sprintf("generate-%s-cert.sh.mustache", certType))
 
+	getSanList := func(l []string) []map[string](interface{}) {
+		result := make([]map[string](interface{}), 0, len(l))
+		for i, v := range l {
+			result = append(result, map[string](interface{}){
+				"index": fmt.Sprintf("%d", i+1),
+				"value": v,
+			})
+		}
+		return result
+	}
+
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
 		"useRsa":               algorithm == rsa,
 		"useEcdsa":             algorithm == ecdsa,
@@ -113,13 +124,15 @@ func genEndCert(
 		"csrPath":              path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s.csr", certType, key)),
 		"privateKeyPath":       path.Join(configDir, "setup", fmt.Sprintf("%s-key-%s.pem", certType, key)),
 		"subjectCn":            certificateConfig.Subject.CN,
-		"serial":               certificateConfig.Serial,
 		"caPath":               path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caKey)),
 		"certPath":             path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", certType, key)),
 		"pkcs11slotId":         configurations.GetPkcs11SlotIdMapping(caYubikeySlot),
 		"rootCaPath":           path.Join(configDir, "setup", "ca-root.pem"),
 		"bundleCertPath":       configurations.Configurations().SecretsConfiguration().GetCertPath(certType, key),
 		"configPrivateKeyPath": configurations.Configurations().SecretsConfiguration().GetPrivateKeyPath(certType, key),
+		"sans": map[string](interface{}){
+			"ips": getSanList(certificateConfig.SANs.IPs),
+		},
 		"libPaths": map[string]string{
 			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
 			"ykcs11": certSetupConfig.LibPaths.Ykcs11,
@@ -156,20 +169,26 @@ func main() {
 		serverConfigTemplatePath,
 		certificatesConfig,
 		certificatesConfig.Ca.Deploy[0])
+	genIntermediateCa(
+		"service",
+		configDir,
+		serverConfigTemplatePath,
+		certificatesConfig,
+		certificatesConfig.Ca.Service[0])
 
+	// deploy
 	genKeyPair(
 		"deploy",
 		configDir,
 		serverConfigTemplatePath,
 	)
-
 	genEndCert(
 		rsa,
 		configurations.SecretTypeClient,
 		configurations.SecretNameDeployAzureServicePrincipal,
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Client.Deploy.AzureServicePrincipal[0],
+		certificatesConfig.Areas.Deploy.AzureServicePrincipal[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
@@ -180,7 +199,7 @@ func main() {
 		configurations.SecretNameDeploySds,
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Client.Deploy.SdsServer[0],
+		certificatesConfig.Areas.Deploy.SdsServer[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
@@ -191,9 +210,21 @@ func main() {
 		configurations.SecretNameDeploySds,
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Client.Deploy.SdsClient[0],
+		certificatesConfig.Areas.Deploy.SdsClient[0],
 		certificatesConfig,
 		"deploy",
 		certificatesConfig.Ca.Deploy[0].Yubikey.Slot,
+	)
+
+	genEndCert(
+		ecdsa,
+		configurations.SecretTypeServer,
+		configurations.SecretNameProxy,
+		configDir,
+		serverConfigTemplatePath,
+		certificatesConfig.Areas.Proxy.Server[0],
+		certificatesConfig,
+		"service",
+		certificatesConfig.Ca.Service[0].Yubikey.Slot,
 	)
 }

@@ -10,30 +10,38 @@ type SecretType string
 
 const (
 	SecretTypeClient SecretType = "client"
-	SecretTypeServer            = "server"
+	SecretTypeServer SecretType = "server"
 )
+
+func SecretTypeFromString(str string) (secretType SecretType, err error) {
+	switch str {
+	case string(SecretTypeClient):
+		return SecretTypeClient, nil
+	case string(SecretTypeServer):
+		return SecretTypeServer, nil
+	}
+	err = errors.New("Invalid SecretType value: " + str)
+	return
+}
 
 type SecretName string
 
 const (
 	SecretNameDeploy                      SecretName = "deploy"
-	SecretNameDeployAzureServicePrincipal            = "deploy-azure-service-principal"
-	SecretNameDeploySds                              = "deploy-sds"
+	SecretNameDeployAzureServicePrincipal SecretName = "deploy-azure-service-principal"
+	SecretNameDeploySds                   SecretName = "deploy-sds"
+	SecretNameProxy                       SecretName = "proxy"
 )
 
-type SdsSecretName string
-
-const (
-	sdsSecretNameUnknown     SdsSecretName = "unknown"
-	SdsSecretNameProxyServer SdsSecretName = "proxy_server"
-)
-
-func SdsSecretNameFromString(str string) (SdsSecretName, error) {
+func SecretNameFromString(str string) (secretName SecretName, err error) {
 	switch str {
-	case string(SdsSecretNameProxyServer):
-		return SdsSecretNameProxyServer, nil
+	case string(SecretNameProxy):
+		return SecretNameProxy, nil
+	case string(SecretNameDeploySds):
+		return SecretNameDeploySds, nil
 	}
-	return sdsSecretNameUnknown, errors.New("Invalid SdsSecretName: " + str)
+	err = errors.New("Invalid SecretType value: " + str)
+	return
 }
 
 type SecretsConfiguration struct {

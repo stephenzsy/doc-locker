@@ -12,6 +12,7 @@ type YubikeySlotId string
 const (
 	Slot82 YubikeySlotId = "82"
 	Slot83 YubikeySlotId = "83"
+	Slot84 YubikeySlotId = "84"
 )
 
 type CertificateConfig struct {
@@ -19,6 +20,9 @@ type CertificateConfig struct {
 		CN string `json:"CN"`
 	} `json:"subject"`
 	Serial string `json:"serial"`
+	SANs   struct {
+		IPs []string `json:"ips"`
+	} `json:"sans"`
 }
 
 type YubikeyStoredCertificateConfiguration struct {
@@ -34,6 +38,8 @@ func GetPkcs11SlotIdMapping(slot YubikeySlotId) string {
 		return "5"
 	case Slot83:
 		return "6"
+	case Slot84:
+		return "7"
 	}
 	return ""
 }
@@ -44,19 +50,23 @@ type ServerSetupCertificatesConfiguration struct {
 		Ykcs11 string `json:"ykcs11"`
 	} `json:"libPaths"`
 	Ca struct {
-		Root   []YubikeyStoredCertificateConfiguration `json:"root"`
-		Deploy []YubikeyStoredCertificateConfiguration `json:"deploy"`
+		Root    []YubikeyStoredCertificateConfiguration `json:"root"`
+		Deploy  []YubikeyStoredCertificateConfiguration `json:"deploy"`
+		Service []YubikeyStoredCertificateConfiguration `json:"service"`
 	} `json:"ca"`
 	Keys struct {
 		Deploy []CertificateConfig `json:"deploy"`
 	} `json:"keys"`
-	Client struct {
+	Areas struct {
 		Deploy struct {
 			AzureServicePrincipal []CertificateConfig `json:"azureServicePrincipal"`
 			SdsServer             []CertificateConfig `json:"sdsServer"`
 			SdsClient             []CertificateConfig `json:"sdsClient"`
 		} `json:"deploy"`
-	} `json:"client"`
+		Proxy struct {
+			Server []CertificateConfig `json:"server"`
+		} `json:"proxy"`
+	} `json:"areas"`
 }
 
 type ServerSetupCloudAzureConfiguration struct {

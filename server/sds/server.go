@@ -3,6 +3,7 @@ package sds
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,6 +13,17 @@ import (
 	sds_provisioner "github.com/stephenzsy/doc-locker/server/sds/provisioners"
 	sds_provisioner_azure "github.com/stephenzsy/doc-locker/server/sds/provisioners/azure"
 )
+
+func getWhitelistedSdsSecretFromString(str string) (secretType configurations.SecretType, secretName configurations.SecretName, err error) {
+	if err != nil {
+		return
+	}
+	if str == fmt.Sprintf("%s-%s", configurations.SecretTypeServer, configurations.SecretNameDeploySds) {
+		return configurations.SecretTypeServer, configurations.SecretNameDeploySds, nil
+	}
+	err = errors.New("Invalid secret name for SDS: " + str)
+	return
+}
 
 type server struct {
 	certProvisioner sds_provisioner.CertificatesProvisioner
@@ -83,13 +95,13 @@ func (s *server) StreamSecrets(stream secretservice.SecretDiscoveryService_Strea
 				versionInfo = s.versionInfo()
 			}
 
-			for _, name := range r.ResourceNames {
-				secretName, err := configurations.SdsSecretNameFromString(name)
+			for _, resourceName := range r.ResourceNames {
+				secretType, secretName, err := getWhitelistedSdsSecretFromString(resourceName)
 				if err != nil {
 					return err
 				}
 
-				err = s.certProvisioner.FetchCertificateWithPrivateKey(ctx, secretName)
+				err = s.certProvisioner.FetchCertificateWithPrivateKey(ctx, secretType, secretName)
 				if err != nil {
 					return err
 				}

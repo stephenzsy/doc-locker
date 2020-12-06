@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,7 +31,7 @@ func genEnvoy(templatesDir string, serverSetupConfig *configurations.ServerSetup
 		"proxy": map[string]interface{}{
 			"address":     serverSetupConfig.ProxyListener.Address,
 			"portValue":   serverSetupConfig.ProxyListener.Port,
-			"sdsCertName": configurations.SdsSecretNameProxyServer,
+			"sdsCertName": fmt.Sprintf("%s-%s", configurations.SecretTypeServer, configurations.SecretNameDeploySds),
 		},
 	})
 	if e != nil {

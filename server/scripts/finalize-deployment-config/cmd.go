@@ -11,7 +11,7 @@ import (
 	"log"
 
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
-	"github.com/stephenzsy/doc-locker/server/common/security"
+	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
 func UpdateEncryptionMaterial(c *configurations.DeploymentConfigurationFile, configRootDir string) (*rsa.PrivateKey, error) {
@@ -19,7 +19,7 @@ func UpdateEncryptionMaterial(c *configurations.DeploymentConfigurationFile, con
 		configurations.Configurations().SecretsConfiguration().GetKeyPairPath(configurations.SecretNameDeploy))
 	privateKeyPemBlock, certContent := pem.Decode(certContent)
 	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyPemBlock.Bytes)
-	encryptionKey, err := security.GenerateAes256Key()
+	encryptionKey, err := crypto_utils.GenerateAes256Key()
 	c.EncryptionMaterial.EncryptedKey, err = rsa.EncryptOAEP(sha512.New384(), rand.Reader, &privateKey.PublicKey, encryptionKey, []byte{})
 	return privateKey, err
 }

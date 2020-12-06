@@ -10,7 +10,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/stephenzsy/doc-locker/server/common/security"
+	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
 type DeploymentConfiguration interface {
@@ -70,7 +70,7 @@ func (c *DeploymentConfigurationFile) GetPrivateConfig(privateKey *rsa.PrivateKe
 	}
 	if c.Secret != nil {
 		var decrypted []byte
-		decrypted, err = security.AESDecrypt(encryptionKey, &c.Secret)
+		decrypted, err = crypto_utils.AESDecrypt(encryptionKey, &c.Secret)
 		if err != nil {
 			return
 		}
@@ -91,7 +91,7 @@ func (c *DeploymentConfigurationFile) SetPrivateConfig(publicKey *rsa.PublicKey,
 		return
 	}
 
-	c.Secret, err = security.AESEncrypt(encryptionKey, &content)
+	c.Secret, err = crypto_utils.AESEncrypt(encryptionKey, &content)
 	return
 }
 
