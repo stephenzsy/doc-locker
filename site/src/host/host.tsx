@@ -7,7 +7,7 @@ export function Host(): JSX.Element {
 
     React.useEffect(() => {
         (async () => {
-            const client = new HostServiceClient('http://localhost:10000');
+            const client = new HostServiceClient('https://[::1]:10000');
             const response = await client.status(new HostStatusRequest(), {});
             setJson(response.getStatusjson());
         })();

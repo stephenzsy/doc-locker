@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
@@ -33,5 +34,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(result)
+	fmt.Print(result)
 }

@@ -5,20 +5,20 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
-	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
-func getAzureKeyVaultCertificateName(secretType configurations.SecretType, secretName configurations.SecretName) string {
+func getAzureKeyVaultCertificateName(secretType configurations.SecretType, secretName configurations.SecretName) (string, error) {
 	if secretType == configurations.SecretTypeServer && secretName == configurations.SecretNameProxy {
-		return "proxy-server"
+		return "proxy-server", nil
 	}
-	return ""
+	return "", errors.New(fmt.Sprintf("Certificate name not valid: %s, %s", secretType, secretName))
 }
 
 func getServicePrincipalToken(configs *configurations.DeploymentConfigurationFile) (token *adal.ServicePrincipalToken, err error) {
@@ -87,49 +87,58 @@ func NewAzureCertificatesProvisioner() (p *provisioner, err error) {
 	return
 }
 
-func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context, secretType configurations.SecretType, secretName configurations.SecretName) (err error) {
-	result, err := p.client.GetCertificate(ctx, p.vaultBaseUrl, getAzureKeyVaultCertificateName(secretType, secretName), "")
+func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context,
+	secretType configurations.SecretType,
+	secretName configurations.SecretName) (certificates []*pem.Block, privateKey *pem.Block, err error) {
+	certificateName, err := getAzureKeyVaultCertificateName(secretType, secretName)
 	if err != nil {
 		return
 	}
-	if !(*result.Policy.KeyProperties.Exportable) {
-		return errors.New("Certificate not exportable")
+	result, err := p.client.GetSecret(ctx, p.vaultBaseUrl, certificateName, "")
+	if err != nil {
+		return
 	}
 
-	derBytes := result.Cer
-	_, err = x509.ParseCertificate(*derBytes)
+	var rest []byte
+	privateKey, rest = pem.Decode(([]byte)(*result.Value))
 	if err != nil {
 		return
 	}
+	certificates = make([]*pem.Block, 0, 3)
+	for {
+		var certPemBlock *pem.Block
+		certPemBlock, rest = pem.Decode(rest)
+		if certPemBlock == nil {
+			break
+		}
+		certificates = append(certificates, certPemBlock)
+	}
+
 	return
 }
 
 func (p *provisioner) ImportCertificate(
 	ctx context.Context,
 	secretType configurations.SecretType,
-	secretName configurations.SecretName) (importedCertBundle keyvault.CertificateBundle, err error) {
+	secretName configurations.SecretName) (importedCertBundle keyvault.SecretBundle, err error) {
 	configs := configurations.Configurations().SecretsConfiguration()
 	certBytes, err := ioutil.ReadFile(configs.GetCertPath(secretType, secretName))
 	if err != nil {
 		return
 	}
-	privateKey, err := crypto_utils.ParseECPrivateKeyFromPemFile(configs.GetPrivateKeyPath(secretType, secretName))
+	privateKey, err := ioutil.ReadFile(configs.GetPrivateKeyPath(secretType, secretName))
 	if err != nil {
 		return
 	}
-	privateKeyBytes, err := crypto_utils.MarshalPKCS8PrivateKeyPemBlock(privateKey)
-	if err != nil {
-		return
-	}
-	certBundle := string(append(privateKeyBytes, certBytes...))
+	certBundle := string(append(privateKey, certBytes...))
 	contentType := "application/x-pem-file"
-	return p.client.ImportCertificate(ctx, p.vaultBaseUrl, getAzureKeyVaultCertificateName(secretType, secretName),
-		keyvault.CertificateImportParameters{
-			Base64EncodedCertificate: &certBundle,
-			CertificatePolicy: &keyvault.CertificatePolicy{
-				SecretProperties: &keyvault.SecretProperties{
-					ContentType: &contentType,
-				},
-			},
+	azureKeyVaultCertificateName, err := getAzureKeyVaultCertificateName(secretType, secretName)
+	if err != nil {
+		return
+	}
+	return p.client.SetSecret(ctx, p.vaultBaseUrl, azureKeyVaultCertificateName,
+		keyvault.SecretSetParameters{
+			Value:       &certBundle,
+			ContentType: &contentType,
 		})
 }

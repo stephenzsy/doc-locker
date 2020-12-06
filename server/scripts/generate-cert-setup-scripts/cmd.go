@@ -217,7 +217,7 @@ func main() {
 	)
 
 	genEndCert(
-		ecdsa,
+		rsa,
 		configurations.SecretTypeServer,
 		configurations.SecretNameProxy,
 		configDir,

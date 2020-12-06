@@ -31,7 +31,7 @@ func genEnvoy(templatesDir string, serverSetupConfig *configurations.ServerSetup
 		"proxy": map[string]interface{}{
 			"address":     serverSetupConfig.ProxyListener.Address,
 			"portValue":   serverSetupConfig.ProxyListener.Port,
-			"sdsCertName": fmt.Sprintf("%s-%s", configurations.SecretTypeServer, configurations.SecretNameDeploySds),
+			"sdsCertName": fmt.Sprintf("%s-%s", configurations.SecretTypeServer, configurations.SecretNameProxy),
 		},
 	})
 	if e != nil {

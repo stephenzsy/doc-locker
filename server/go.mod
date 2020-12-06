@@ -11,6 +11,7 @@ require (
 	github.com/cbroglie/mustache v1.2.0
 	github.com/envoyproxy/go-control-plane v0.9.7
 	github.com/golang/protobuf v1.4.3
+	github.com/google/uuid v1.1.2
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect

@@ -11,15 +11,8 @@ cat>{{{csrCnfPath}}}<<EOF
 [ req ]
 distinguished_name = req_distinguished_name
 prompt = no
-req_extensions     = req_ext
 [ req_distinguished_name ]
 CN={{{subjectCn}}}
-[ req_ext ]
-subjectAltName = @alt_names
-[ alt_names ]
-{{#sans.ips}}
-IP.{{{index}}} = {{{value}}}
-{{/sans.ips}}
 EOF
 
 cat>{{{crtCnfPath}}}<<EOF
@@ -31,6 +24,11 @@ keyUsage=critical,keyEncipherment,digitalSignature
 keyUsage=critical,keyAgreement,digitalSignature
 {{/useEcdsa}}
 extendedKeyUsage=critical,serverAuth
+subjectAltName = @alt_names
+[ alt_names ]
+{{#sans.ips}}
+IP.{{{index}}} = {{{value}}}
+{{/sans.ips}}
 EOF
 
 # create CSR
