@@ -180,13 +180,13 @@ func main() {
 		serverConfigTemplatePath,
 		certificatesConfig.Ca[configurations.CaRoleRoot][0])
 	genIntermediateCa(
-		"deploy",
+		configurations.CaRoleDeploy,
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig,
 		certificatesConfig.Ca[configurations.CaRoleDeploy][0])
 	genIntermediateCa(
-		"service",
+		configurations.CaRoleService,
 		configDir,
 		serverConfigTemplatePath,
 		certificatesConfig,
