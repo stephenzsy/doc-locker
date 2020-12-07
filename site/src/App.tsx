@@ -1,32 +1,56 @@
-import React from 'react';
-import { BrowserRouter, Link, Route, Switch } from 'react-router-dom';
-import './App.css';
-import { Host } from './host/host';
+import { AppBar, Box, Tab, Tabs } from "@material-ui/core";
+import React from "react";
+import {
+  BrowserRouter,
+  Route,
+  Switch,
+  useHistory,
+  useLocation,
+} from "react-router-dom";
+import "./App.css";
+import { Host } from "./host/host";
 
-function App() {
+function App(): JSX.Element {
   return (
     <BrowserRouter>
       <div>
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/host">Host</Link>
-            </li>
-          </ul>
-        </nav>
+        <AppBarTabs />
         <Switch>
           <Route path="/host">
-            <Host />
+            <Box>
+              <Host />
+            </Box>
           </Route>
-          <Route path="/">
-            Hello World!
+          <Route path="/login">
+            <Box>
+              <Host />
+            </Box>
           </Route>
+          <Route path="/">Hello World!</Route>
         </Switch>
       </div>
     </BrowserRouter>
+  );
+}
+
+function AppBarTabs(): JSX.Element {
+  const location = useLocation();
+  const history = useHistory();
+  const onChange = React.useCallback(
+    (event, value) => {
+      history.push(value);
+    },
+    [history]
+  );
+
+  return (
+    <AppBar position="static">
+      <Tabs value={location.pathname} onChange={onChange}>
+        <Tab label="Home" value="/" />
+        <Tab label="Host" value="/host" />
+        <Tab label="Login" value="/login" />
+      </Tabs>
+    </AppBar>
   );
 }
 

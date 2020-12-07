@@ -1,6 +1,11 @@
 #!/bin/bash
 
-openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
+{{#keyProps.useRsa}}
+openssl genrsa -out {{{privateKeyPath}}} {{{keyProps.rsaKeySize}}}
+{{/keyProps.useRsa}}
+{{#keyProps.useEc}}
+openssl ecparam -name {{{keyProps.ecCurveName}}} -genkey -noout -out {{{privateKeyPath}}}
+{{/keyProps.useEc}}
 
 cat>{{{cnfPath}}}<<EOF
 [ req ]

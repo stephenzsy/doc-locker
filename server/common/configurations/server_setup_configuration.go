@@ -1,6 +1,10 @@
 package configurations
 
-import "path"
+import (
+	"encoding/json"
+	"fmt"
+	"path"
+)
 
 type ListenerConfig struct {
 	Address string `json:"address"`
@@ -15,6 +19,46 @@ const (
 	Slot84 YubikeySlotId = "84"
 )
 
+func (s *YubikeySlotId) UnmarshalJSON(data []byte) error {
+	a := (*string)(s)
+	err := json.Unmarshal(data, a)
+	if err != nil {
+		return err
+	}
+
+	// Validate the valid enum values
+	switch *s {
+	case Slot82, Slot83, Slot84:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for YubikeySlotId: %s", *a)
+	}
+}
+
+type CaRole string
+
+const (
+	CaRoleRoot    CaRole = "root"
+	CaRoleDeploy  CaRole = "deploy"
+	CaRoleService CaRole = "service"
+)
+
+func (s *CaRole) UnmarshalJSON(data []byte) error {
+	a := (*string)(s)
+	err := json.Unmarshal(data, a)
+	if err != nil {
+		return err
+	}
+
+	// Validate the valid enum values
+	switch *s {
+	case CaRoleRoot, CaRoleDeploy, CaRoleService:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for CaRole: %s", *a)
+	}
+}
+
 type CertificateConfig struct {
 	Subject struct {
 		CN string `json:"CN"`
@@ -23,6 +67,8 @@ type CertificateConfig struct {
 	SANs   struct {
 		IPs []string `json:"ips"`
 	} `json:"sans"`
+	KeyProperties KeyProperties `json:"keyProps"`
+	Issuer        CaRole        `json:"issuer"`
 }
 
 type YubikeyStoredCertificateConfiguration struct {
@@ -49,13 +95,9 @@ type ServerSetupCertificatesConfiguration struct {
 		Pkcs11 string `json:"pkcs11"`
 		Ykcs11 string `json:"ykcs11"`
 	} `json:"libPaths"`
-	Ca struct {
-		Root    []YubikeyStoredCertificateConfiguration `json:"root"`
-		Deploy  []YubikeyStoredCertificateConfiguration `json:"deploy"`
-		Service []YubikeyStoredCertificateConfiguration `json:"service"`
-	} `json:"ca"`
+	Ca   map[CaRole][]YubikeyStoredCertificateConfiguration `json:"ca"`
 	Keys struct {
-		Deploy []CertificateConfig `json:"deploy"`
+		Deploy []KeyProperties `json:"deploy"`
 	} `json:"keys"`
 	Areas struct {
 		Deploy struct {
@@ -65,7 +107,12 @@ type ServerSetupCertificatesConfiguration struct {
 		} `json:"deploy"`
 		Proxy struct {
 			Server []CertificateConfig `json:"server"`
+			Client []CertificateConfig `json:"client"`
 		} `json:"proxy"`
+		Backend struct {
+			Api  []CertificateConfig `json:"api"`
+			Site []CertificateConfig `json:"site"`
+		} `json:"backend"`
 	} `json:"areas"`
 }
 

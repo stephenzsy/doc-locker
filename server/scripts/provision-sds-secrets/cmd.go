@@ -22,12 +22,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	secretType, err := configurations.SecretTypeFromString(*secretTypeStr)
-	if err != nil {
+	var secretType configurations.SecretType
+	if err = secretType.FromString(*secretTypeStr); err != nil {
 		log.Fatal(err)
 	}
-	secretName, err := configurations.SecretNameFromString(*secretNameStr)
-	if err != nil {
+	var secretName configurations.SecretName
+	if err = secretName.FromString(*secretNameStr); err != nil {
 		log.Fatal(err)
 	}
 	result, err := azureProvisioner.ImportCertificate(context.Background(), secretType, secretName)

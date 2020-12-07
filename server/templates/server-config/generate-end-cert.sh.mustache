@@ -1,11 +1,11 @@
 #!/bin/bash
 
-{{#useRsa}}
-openssl genrsa -out {{{privateKeyPath}}} 3072
-{{/useRsa}}
-{{#useEcdsa}}
-openssl ecparam -name secp384r1 -genkey -noout -out {{{privateKeyPath}}}
-{{/useEcdsa}}
+{{#keyProps.useRsa}}
+openssl genrsa -out {{{privateKeyPath}}} {{{keyProps.rsaKeySize}}}
+{{/keyProps.useRsa}}
+{{#keyProps.useEc}}
+openssl ecparam -name {{{keyProps.ecCurveName}}} -genkey -noout -out {{{privateKeyPath}}}
+{{/keyProps.useEc}}
 
 cat>{{{csrCnfPath}}}<<EOF
 [ req ]
@@ -17,6 +17,7 @@ EOF
 
 cat>{{{crtCnfPath}}}<<EOF
 basicConstraints=critical,CA:false
+{{#useTlsServer}}
 {{#useRsa}}
 keyUsage=critical,keyEncipherment,digitalSignature
 {{/useRsa}}
@@ -24,6 +25,11 @@ keyUsage=critical,keyEncipherment,digitalSignature
 keyUsage=critical,keyAgreement,digitalSignature
 {{/useEcdsa}}
 extendedKeyUsage=critical,serverAuth
+{{/useTlsServer}}
+{{#useTlsClient}}
+keyUsage=critical,digitalSignature
+extendedKeyUsage=critical,clientAuth
+{{/useTlsClient}}
 subjectAltName = @alt_names
 [ alt_names ]
 {{#sans.ips}}

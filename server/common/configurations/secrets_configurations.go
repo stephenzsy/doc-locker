@@ -1,7 +1,7 @@
 package configurations
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"path"
 )
@@ -13,15 +13,27 @@ const (
 	SecretTypeServer SecretType = "server"
 )
 
-func SecretTypeFromString(str string) (secretType SecretType, err error) {
-	switch str {
-	case string(SecretTypeClient):
-		return SecretTypeClient, nil
-	case string(SecretTypeServer):
-		return SecretTypeServer, nil
+func (s *SecretType) FromString(str string) error {
+	a := (*string)(s)
+	*a = str
+	// Validate the valid enum values
+	switch *s {
+	case
+		SecretTypeClient,
+		SecretTypeServer:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for SecretType: %s", *a)
 	}
-	err = errors.New("Invalid SecretType value: " + str)
-	return
+}
+
+func (s *SecretType) UnmarshalJSON(data []byte) error {
+	var str string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+	return s.FromString(str)
 }
 
 type SecretName string
@@ -31,17 +43,35 @@ const (
 	SecretNameDeployAzureServicePrincipal SecretName = "deploy-azure-service-principal"
 	SecretNameDeploySds                   SecretName = "deploy-sds"
 	SecretNameProxy                       SecretName = "proxy"
+	SecretNameApi                         SecretName = "api"
+	SecretNameSite                        SecretName = "site"
 )
 
-func SecretNameFromString(str string) (secretName SecretName, err error) {
-	switch str {
-	case string(SecretNameProxy):
-		return SecretNameProxy, nil
-	case string(SecretNameDeploySds):
-		return SecretNameDeploySds, nil
+func (s *SecretName) FromString(str string) error {
+	a := (*string)(s)
+	*a = str
+	// Validate the valid enum values
+	switch *s {
+	case
+		SecretNameDeploy,
+		SecretNameDeployAzureServicePrincipal,
+		SecretNameDeploySds,
+		SecretNameProxy,
+		SecretNameApi,
+		SecretNameSite:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for SecretName: %s", *a)
 	}
-	err = errors.New("Invalid SecretType value: " + str)
-	return
+}
+
+func (s *SecretName) UnmarshalJSON(data []byte) error {
+	var str string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+	return s.FromString(str)
 }
 
 type SecretsConfiguration struct {
