@@ -9,8 +9,10 @@ import (
 type SecretType string
 
 const (
-	SecretTypeClient SecretType = "client"
-	SecretTypeServer SecretType = "server"
+	SecretTypeCa      SecretType = "ca"
+	SecretTypeClient  SecretType = "client"
+	SecretTypeServer  SecretType = "server"
+	SecretTypeKeyPair SecretType = "key-pair"
 )
 
 func (s *SecretType) FromString(str string) error {
@@ -19,8 +21,10 @@ func (s *SecretType) FromString(str string) error {
 	// Validate the valid enum values
 	switch *s {
 	case
+		SecretTypeCa,
 		SecretTypeClient,
-		SecretTypeServer:
+		SecretTypeServer,
+		SecretTypeKeyPair:
 		return nil
 	default:
 		return fmt.Errorf("invalid value for SecretType: %s", *a)
@@ -76,6 +80,10 @@ func (s *SecretName) UnmarshalJSON(data []byte) error {
 
 type SecretsConfiguration struct {
 	configDir string
+}
+
+func (c *SecretsConfiguration) GetCaPath(caRole CaRole) string {
+	return path.Join(c.configDir, "certs", fmt.Sprintf("%s-%s.pem", SecretTypeCa, caRole))
 }
 
 func (c *SecretsConfiguration) GetCertPath(secretType SecretType, secretName SecretName) string {

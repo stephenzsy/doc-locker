@@ -95,15 +95,12 @@ type ServerSetupCertificatesConfiguration struct {
 		Pkcs11 string `json:"pkcs11"`
 		Ykcs11 string `json:"ykcs11"`
 	} `json:"libPaths"`
-	Ca   map[CaRole][]YubikeyStoredCertificateConfiguration `json:"ca"`
-	Keys struct {
-		Deploy []KeyProperties `json:"deploy"`
-	} `json:"keys"`
+	Ca    map[CaRole][]YubikeyStoredCertificateConfiguration `json:"ca"`
 	Areas struct {
 		Deploy struct {
-			AzureServicePrincipal []CertificateConfig `json:"azureServicePrincipal"`
-			SdsServer             []CertificateConfig `json:"sdsServer"`
-			SdsClient             []CertificateConfig `json:"sdsClient"`
+			KeyPair   []CertificateConfig `json:"keyPair"`
+			SdsServer []CertificateConfig `json:"sdsServer"`
+			SdsClient []CertificateConfig `json:"sdsClient"`
 		} `json:"deploy"`
 		Proxy struct {
 			Server []CertificateConfig `json:"server"`

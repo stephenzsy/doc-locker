@@ -38,6 +38,7 @@ func genRootCa(
 
 	templateFilename := path.Join(templatesDir, "generate-root-ca.sh.mustache")
 
+	secretsConfiguration := configurations.Configurations().SecretsConfiguration()
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
 		"keyProps":       getKeyPropsContext(caCertificateConfig.KeyProperties),
 		"slot":           string(caCertificateConfig.Yubikey.Slot),
@@ -45,7 +46,7 @@ func genRootCa(
 		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("ca-%s-private-key.pem", configurations.CaRoleRoot)),
 		"subjectCn":      caCertificateConfig.Subject.CN,
 		"serial":         caCertificateConfig.Serial,
-		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", configurations.CaRoleRoot)),
+		"certPath":       secretsConfiguration.GetCaPath(configurations.CaRoleRoot),
 	})
 	if e != nil {
 		log.Fatal(e)
@@ -64,6 +65,7 @@ func genIntermediateCa(
 	caCertificateConfig configurations.YubikeyStoredCertificateConfiguration) {
 	templateFilename := path.Join(templatesDir, "generate-int-ca.sh.mustache")
 
+	secretsConfiguration := configurations.Configurations().SecretsConfiguration()
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
 		"keyProps":       getKeyPropsContext(caCertificateConfig.KeyProperties),
 		"slot":           string(caCertificateConfig.Yubikey.Slot),
@@ -71,8 +73,9 @@ func genIntermediateCa(
 		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("ca-%s.csr", caRole)),
 		"privateKeyPath": path.Join(configDir, "setup", fmt.Sprintf("ca-%s-private-key.pem", caRole)),
 		"subjectCn":      caCertificateConfig.Subject.CN,
-		"caPath":         path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caCertificateConfig.Issuer)),
-		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", caRole)),
+		"caPath":         secretsConfiguration.GetCaPath(caCertificateConfig.Issuer),
+		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", configurations.SecretTypeCa, caRole)),
+		"bundleCertPath": secretsConfiguration.GetCaPath(caRole),
 		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(certSetupConfig.Ca[configurations.CaRoleRoot][0].Yubikey.Slot),
 		"libPaths": map[string]string{
 			"pkcs11": certSetupConfig.LibPaths.Pkcs11,
@@ -88,30 +91,9 @@ func genIntermediateCa(
 	}
 }
 
-func genKeyPair(
-	key string,
-	configDir string,
-	templatesDir string,
-	keyProps configurations.KeyProperties,
-) {
-	templateFilename := path.Join(templatesDir, "generate-key-pair.sh.mustache")
-
-	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
-		"keyProps":       getKeyPropsContext(keyProps),
-		"privateKeyPath": path.Join(configDir, "keypairs", fmt.Sprintf("key-%s.pem", key)),
-	})
-	if e != nil {
-		log.Fatal(e)
-	}
-	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-key-pair.sh", key)), []byte(rendered), 0755)
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
 func genEndCert(
-	certType configurations.SecretType,
-	key configurations.SecretName,
+	secretType configurations.SecretType,
+	secretName configurations.SecretName,
 	configDir string,
 	templatesDir string,
 	certConfig configurations.CertificateConfig,
@@ -130,22 +112,21 @@ func genEndCert(
 		}
 		return result
 	}
-
+	secretsConfiguration := configurations.Configurations().SecretsConfiguration()
 	rendered, e := mustache.RenderFile(templateFilename, map[string](interface{}){
-		"keyProps":             getKeyPropsContext(certConfig.KeyProperties),
-		"useTlsServer":         certType == configurations.SecretTypeServer,
-		"useTlsClient":         certType == configurations.SecretTypeClient,
-		"csrCnfPath":           path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-csr.cnf", certType, key)),
-		"crtCnfPath":           path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-crt.cnf", certType, key)),
-		"csrPath":              path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s.csr", certType, key)),
-		"privateKeyPath":       path.Join(configDir, "setup", fmt.Sprintf("%s-key-%s.pem", certType, key)),
-		"subjectCn":            certConfig.Subject.CN,
-		"caPath":               path.Join(configDir, "setup", fmt.Sprintf("ca-%s.pem", certConfig.Issuer)),
-		"certPath":             path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", certType, key)),
-		"pkcs11slotId":         configurations.GetPkcs11SlotIdMapping(issuerConfig.Yubikey.Slot),
-		"rootCaPath":           path.Join(configDir, "setup", "ca-root.pem"),
-		"bundleCertPath":       configurations.Configurations().SecretsConfiguration().GetCertPath(certType, key),
-		"configPrivateKeyPath": configurations.Configurations().SecretsConfiguration().GetPrivateKeyPath(certType, key),
+		"keyProps":       getKeyPropsContext(certConfig.KeyProperties),
+		"useTlsServer":   secretType == configurations.SecretTypeServer,
+		"useTlsClient":   secretType == configurations.SecretTypeClient,
+		"useKeyPair":     secretType == configurations.SecretTypeKeyPair,
+		"csrCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-csr.cnf", secretType, secretName)),
+		"crtCnfPath":     path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s-crt.cnf", secretType, secretName)),
+		"csrPath":        path.Join(configDir, "setup", fmt.Sprintf("%s-cert-%s.csr", secretType, secretName)),
+		"privateKeyPath": secretsConfiguration.GetPrivateKeyPath(secretType, secretName),
+		"subjectCn":      certConfig.Subject.CN,
+		"caPath":         secretsConfiguration.GetCaPath(certConfig.Issuer),
+		"certPath":       path.Join(configDir, "setup", fmt.Sprintf("%s-%s.pem", secretType, secretName)),
+		"pkcs11slotId":   configurations.GetPkcs11SlotIdMapping(issuerConfig.Yubikey.Slot),
+		"bundleCertPath": secretsConfiguration.GetCertPath(secretType, secretName),
 		"sans": map[string](interface{}){
 			"ips": getSanList(certConfig.SANs.IPs),
 		},
@@ -157,7 +138,7 @@ func genEndCert(
 	if e != nil {
 		log.Fatal(e)
 	}
-	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-cert-%s.sh", certType, key)), []byte(rendered), 0755)
+	e = ioutil.WriteFile(path.Join(configDir, "scripts", fmt.Sprintf("generate-%s-cert-%s.sh", secretType, secretName)), []byte(rendered), 0755)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -193,17 +174,12 @@ func main() {
 		certificatesConfig.Ca[configurations.CaRoleService][0])
 
 	// deploy
-	genKeyPair(
-		"deploy",
-		configDir,
-		serverConfigTemplatePath,
-		certificatesConfig.Keys.Deploy[0])
 	genEndCert(
-		configurations.SecretTypeClient,
-		configurations.SecretNameDeployAzureServicePrincipal,
+		configurations.SecretTypeKeyPair,
+		configurations.SecretNameDeploy,
 		configDir,
 		serverConfigTemplatePath,
-		certificatesConfig.Areas.Deploy.AzureServicePrincipal[0],
+		certificatesConfig.Areas.Deploy.SdsServer[0],
 		certificatesConfig)
 	genEndCert(
 		configurations.SecretTypeServer,

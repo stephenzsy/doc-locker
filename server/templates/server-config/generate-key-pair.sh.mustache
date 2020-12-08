@@ -1,8 +1,0 @@
-#!/bin/bash
-
-{{#keyProps.useRsa}}
-openssl genrsa -out {{{privateKeyPath}}} {{{keyProps.rsaKeySize}}}
-{{/keyProps.useRsa}}
-{{#keyProps.useEc}}
-openssl ecparam -name {{{keyProps.ecCurveName}}} -genkey -noout -out {{{privateKeyPath}}}
-{{/keyProps.useEc}}

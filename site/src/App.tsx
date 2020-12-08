@@ -5,37 +5,39 @@ import {
   Route,
   Switch,
   useHistory,
-  useLocation,
+  useLocation
 } from "react-router-dom";
 import "./App.css";
 import { AppContextProvider } from "./AppContext";
+import { AwsCognitoAuthContextProvider } from "./auth/AwsCognitoAuthContext";
+import { LoginPage } from "./auth/LoginPage";
 import { Host } from "./host/host";
 import { Settings } from "./settings/Settings";
 
 function App(): JSX.Element {
   return (
     <AppContextProvider>
-      <BrowserRouter>
-        <div>
-          <AppBarTabs />
-          <Switch>
-            <Route path="/host">
-              <Box>
-                <Host />
-              </Box>
-            </Route>
-            <Route path="/login">
-              <Box>
-                <Host />
-              </Box>
-            </Route>
-            <Route path="/settings">
-              <Settings />
-            </Route>
-            <Route path="/">Hello World!</Route>
-          </Switch>
-        </div>
-      </BrowserRouter>
+      <AwsCognitoAuthContextProvider>
+        <BrowserRouter>
+          <div>
+            <AppBarTabs />
+            <Switch>
+              <Route path="/host">
+                <Box>
+                  <Host />
+                </Box>
+              </Route>
+              <Route path="/login">
+                <LoginPage />
+              </Route>
+              <Route path="/settings">
+                <Settings />
+              </Route>
+              <Route path="/">Hello World!</Route>
+            </Switch>
+          </div>
+        </BrowserRouter>
+      </AwsCognitoAuthContextProvider>
     </AppContextProvider>
   );
 }

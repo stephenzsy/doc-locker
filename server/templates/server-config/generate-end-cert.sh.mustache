@@ -30,11 +30,16 @@ extendedKeyUsage=critical,serverAuth
 keyUsage=critical,digitalSignature
 extendedKeyUsage=critical,clientAuth
 {{/useTlsClient}}
+{{#useKeyPair}}
+keyUsage=critical,dataEncipherment
+{{/useKeyPair}}
+{{^useKeyPair}}
 subjectAltName = @alt_names
 [ alt_names ]
 {{#sans.ips}}
 IP.{{{index}}} = {{{value}}}
 {{/sans.ips}}
+{{/useKeyPair}}
 EOF
 
 # create CSR
@@ -67,5 +72,5 @@ x509 \
     -out {{{certPath}}}
 EOF
 
-cat {{{certPath}}} {{{caPath}}} {{{rootCaPath}}} > {{{bundleCertPath}}}
-mv {{{privateKeyPath}}} {{{configPrivateKeyPath}}}
+cat {{{certPath}}} {{{caPath}}} > {{{bundleCertPath}}}
+rm {{csrPath}} {{{cnfPath}}}
