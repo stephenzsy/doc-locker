@@ -10,6 +10,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
 	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
@@ -19,8 +20,8 @@ type DeploymentConfiguration interface {
 
 type DeploymentCloudConfigurationAzurePublic struct {
 	ServerSetupCloudAzureConfiguration
-	ServicePrincipalThumbprint       HexString `json:"servicePrincipalThumbprint"`
-	ServicePrincipalCertificateChain [][]byte  `json:"servicePrincipalCertificateChain"`
+	ServicePrincipalThumbprint  HexString `json:"servicePrincipalThumbprint"`
+	ServicePrincipalCertificate []byte    `json:"servicePrincipalCertificate"`
 }
 
 type DeploymentCloudConfigurationPublic struct {
@@ -52,15 +53,6 @@ type DeploymentCloudConfigurationPrivate struct {
 
 type DeploymentConfigurationPrivate struct {
 	Cloud DeploymentCloudConfigurationPrivate `json:"cloud"`
-}
-
-func newDeploymentConfiguration(configDir string) (*DeploymentConfigurationFile, error) {
-	data := DeploymentConfigurationFile{}
-	e := loadConfigFromFile(path.Join(configDir, "server", "deployment.json"), &data)
-	if e == nil || os.IsNotExist(e) {
-		return &data, nil
-	}
-	return nil, e
 }
 
 func (c *DeploymentConfigurationFile) GetPrivateConfig(privateKey *rsa.PrivateKey) (privateConfig DeploymentConfigurationPrivate, encryptionKey []byte, err error) {
@@ -95,10 +87,34 @@ func (c *DeploymentConfigurationFile) SetPrivateConfig(publicKey *rsa.PublicKey,
 	return
 }
 
-func (c *DeploymentConfigurationFile) Save(configDir string) error {
+func (c *DeploymentConfigurationFile) Save(ctx app_context.AppContext) error {
 	marshalled, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path.Join(configDir, "server", "deployment.json"), marshalled, 0644)
+	configDir, err := GetConfigurationsDir(ctx)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path.Join(configDir, "server", "deployment.json"), marshalled, 0600)
+}
+
+func GetServerDeploymentConfigurationFile(ctx app_context.AppContext) (config DeploymentConfigurationFile, err error) {
+	if err = app_context.VerifyElevated(ctx); err != nil {
+		return
+	}
+
+	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+		return
+	}
+
+	configDir, err := GetConfigurationsDir(ctx)
+	if err != nil {
+		return
+	}
+	err = loadConfigFromFile(path.Join(configDir, "server", "deployment.json"), &config)
+	if os.IsNotExist(err) {
+		err = nil
+	}
+	return
 }

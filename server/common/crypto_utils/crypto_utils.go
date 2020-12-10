@@ -27,6 +27,36 @@ func ParseRsaPrivateKeyFromPemFile(filename string) (privateKey *rsa.PrivateKey,
 	return x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 }
 
+func ParseCertificateFromPemFile(filename string) (certificateChain *x509.Certificate, err error) {
+	fileBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	pemBlock, fileBytes := pem.Decode(fileBytes)
+	return x509.ParseCertificate(pemBlock.Bytes)
+}
+
+func ParseCertificateChainFromPemFile(filename string) (certificateChain []*x509.Certificate, err error) {
+	fileBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	var pemBlock *pem.Block
+	var cert *x509.Certificate
+	for {
+		pemBlock, fileBytes = pem.Decode(fileBytes)
+		cert, err = x509.ParseCertificate(pemBlock.Bytes)
+		if cert == nil {
+			break
+		}
+		if err != nil {
+			return
+		}
+		certificateChain = append(certificateChain, cert)
+	}
+	return
+}
+
 func MarshalPKCS8PrivateKeyPemBlock(key interface{}) (encoded []byte, err error) {
 	der, err := x509.MarshalPKCS8PrivateKey(key)
 	encoded = pem.EncodeToMemory(&pem.Block{

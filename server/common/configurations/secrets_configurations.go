@@ -1,11 +1,14 @@
 package configurations
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"path"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
 type SecretType string
@@ -96,6 +99,21 @@ func (c SecretsConfiguration) GetCertPath(secretType SecretType, secretName Secr
 
 func (c SecretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretName SecretName) string {
 	return path.Join(c.configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", secretType, secretName))
+}
+
+func (c SecretsConfiguration) GetRsaPrivateKey(secretsType SecretType, secretName SecretName) (*rsa.PrivateKey, error) {
+	filePath := c.GetPrivateKeyPath(secretsType, secretName)
+	return crypto_utils.ParseRsaPrivateKeyFromPemFile(filePath)
+}
+
+func (c SecretsConfiguration) GetCertificate(secretsType SecretType, secretName SecretName) (*x509.Certificate, error) {
+	filePath := c.GetCertPath(secretsType, secretName)
+	return crypto_utils.ParseCertificateFromPemFile(filePath)
+}
+
+func (c SecretsConfiguration) GetCertificateChain(secretsType SecretType, secretName SecretName) ([]*x509.Certificate, error) {
+	filePath := c.GetCertPath(secretsType, secretName)
+	return crypto_utils.ParseCertificateChainFromPemFile(filePath)
 }
 
 func GetSecretsConfiguration(ctx app_context.AppContext) (config SecretsConfiguration, err error) {

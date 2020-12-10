@@ -32,14 +32,6 @@ type configurations struct {
 	secertsConfig SecretsConfiguration
 }
 
-func (c *configurations) Deployment() (*DeploymentConfigurationFile, error) {
-	c.deployment.once.Do(func() {
-		c.deployment.data, c.deployment.err = newDeploymentConfiguration(c.configDir)
-	})
-
-	return c.deployment.data.(*DeploymentConfigurationFile), c.deployment.err
-}
-
 func (c *configurations) SecretsConfiguration() *SecretsConfiguration {
 	return &c.secertsConfig
 }

@@ -38,7 +38,7 @@ func main() {
 		os.Mkdir(path.Join(deploymentDir, "envoy"), 0700)
 		os.Mkdir(path.Join(deploymentDir, "certsk"), 0700)
 		os.Mkdir(path.Join(deploymentDir, "scripts"), 0700)
-		os.Mkdir(path.Join(deploymentDir, "serve"), 0700)
+		os.Mkdir(path.Join(deploymentDir, "server"), 0700)
 		os.Mkdir(path.Join(deploymentDir, "site"), 0700)
 		os.Mkdir(path.Join(deploymentDir, "tmp"), 0700)
 		os.Remove(path.Join(rootDir, "latest"))
