@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
 )
 
 type SecretType string
@@ -43,12 +45,13 @@ func (s *SecretType) UnmarshalJSON(data []byte) error {
 type SecretName string
 
 const (
-	SecretNameDeploy                      SecretName = "deploy"
-	SecretNameDeployAzureServicePrincipal SecretName = "deploy-azure-service-principal"
-	SecretNameDeploySds                   SecretName = "deploy-sds"
-	SecretNameProxy                       SecretName = "proxy"
-	SecretNameApi                         SecretName = "api"
-	SecretNameSite                        SecretName = "site"
+	SecretNameDeploy                         SecretName = "deploy"
+	SecretNameDeploySdsAzureServicePrincipal SecretName = "deploy-sds-asp"
+	SecretNameDeploySds                      SecretName = "deploy-sds"
+	SecretNameDeploySdsEnvoy                 SecretName = "deploy-sds-envoy"
+	SecretNameProxy                          SecretName = "proxy"
+	SecretNameApi                            SecretName = "api"
+	SecretNameSite                           SecretName = "site"
 )
 
 func (s *SecretName) FromString(str string) error {
@@ -58,8 +61,9 @@ func (s *SecretName) FromString(str string) error {
 	switch *s {
 	case
 		SecretNameDeploy,
-		SecretNameDeployAzureServicePrincipal,
+		SecretNameDeploySdsAzureServicePrincipal,
 		SecretNameDeploySds,
+		SecretNameDeploySdsEnvoy,
 		SecretNameProxy,
 		SecretNameApi,
 		SecretNameSite:
@@ -82,18 +86,34 @@ type SecretsConfiguration struct {
 	configDir string
 }
 
-func (c *SecretsConfiguration) GetCaPath(caRole CaRole) string {
+func (c SecretsConfiguration) GetCaPath(caRole CaRole) string {
 	return path.Join(c.configDir, "certs", fmt.Sprintf("%s-%s.pem", SecretTypeCa, caRole))
 }
 
-func (c *SecretsConfiguration) GetCertPath(secretType SecretType, secretName SecretName) string {
+func (c SecretsConfiguration) GetCertPath(secretType SecretType, secretName SecretName) string {
 	return path.Join(c.configDir, "certs", fmt.Sprintf("%s-cert-%s.pem", secretType, secretName))
 }
 
-func (c *SecretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretName SecretName) string {
+func (c SecretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretName SecretName) string {
 	return path.Join(c.configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", secretType, secretName))
 }
 
-func (c *SecretsConfiguration) GetKeyPairPath(secretName SecretName) string {
-	return path.Join(c.configDir, "keypairs", fmt.Sprintf("key-%s.pem", secretName))
+func GetSecretsConfiguration(ctx app_context.AppContext) (config SecretsConfiguration, err error) {
+
+	if err = app_context.VerifyElevated(ctx); err != nil {
+		return
+	}
+	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+		return
+	}
+
+	configDir, err := GetConfigurationsDir(ctx)
+	if err != nil {
+		return
+	}
+	config = SecretsConfiguration{
+		configDir: configDir,
+	}
+
+	return
 }

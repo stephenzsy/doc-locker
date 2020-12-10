@@ -2,9 +2,13 @@ package configurations
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"sync"
+
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
 )
 
 func loadConfigFromFile(filePath string, configData interface{}) error {
@@ -24,17 +28,8 @@ type runOnceUtil struct {
 
 type configurations struct {
 	configDir     string
-	serverSetup   runOnceUtil
 	deployment    runOnceUtil
 	secertsConfig SecretsConfiguration
-}
-
-func (c *configurations) ServerSetup() (*ServerSetupConfiguration, error) {
-	c.serverSetup.once.Do(func() {
-		c.serverSetup.data, c.serverSetup.err = newSetupConfiguration(c.configDir)
-	})
-
-	return c.serverSetup.data.(*ServerSetupConfiguration), c.serverSetup.err
 }
 
 func (c *configurations) Deployment() (*DeploymentConfigurationFile, error) {
@@ -53,6 +48,32 @@ var (
 	config     *configurations
 	configOnce sync.Once
 )
+
+func GetConfigurationsRootDir(ctx app_context.AppContext) (dir string, err error) {
+	if err = app_context.VerifyElevated(ctx); err != nil {
+		return
+	}
+	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+		return
+	}
+	dir = os.Getenv("DOCLOCKER_CONFIG_DIR")
+	if dir == "" {
+		err = errors.New("invalid environment variable: DOCLOCKER_CONFIG_DIR")
+	}
+	return
+}
+
+func GetConfigurationsDir(ctx app_context.AppContext) (dir string, err error) {
+	if err = app_context.VerifyElevated(ctx); err != nil {
+		return
+	}
+	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+		return
+	}
+	rootDir, err := GetConfigurationsRootDir(ctx)
+	dir = path.Join(rootDir, ctx.Deployment().Id())
+	return
+}
 
 func newConfigurations() *configurations {
 	configDir := os.Getenv("DOCLOCKER_CONFIG_DIR")

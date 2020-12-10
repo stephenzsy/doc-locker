@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
 )
 
 type ListenerConfig struct {
@@ -59,7 +61,7 @@ func (s *CaRole) UnmarshalJSON(data []byte) error {
 	}
 }
 
-type CertificateConfig struct {
+type CertificateConfiguration struct {
 	Subject struct {
 		CN string `json:"CN"`
 	} `json:"subject"`
@@ -72,7 +74,7 @@ type CertificateConfig struct {
 }
 
 type YubikeyStoredCertificateConfiguration struct {
-	CertificateConfig
+	CertificateConfiguration
 	Yubikey struct {
 		Slot YubikeySlotId `json:"slot"`
 	}
@@ -98,17 +100,18 @@ type ServerSetupCertificatesConfiguration struct {
 	Ca    map[CaRole][]YubikeyStoredCertificateConfiguration `json:"ca"`
 	Areas struct {
 		Deploy struct {
-			KeyPair   []CertificateConfig `json:"keyPair"`
-			SdsServer []CertificateConfig `json:"sdsServer"`
-			SdsClient []CertificateConfig `json:"sdsClient"`
+			KeyPair                  []CertificateConfiguration `json:"keyPair"`
+			SdsAzureServicePrincipal []CertificateConfiguration `json:"sdsAzureServicePrincipal"`
+			SdsServer                []CertificateConfiguration `json:"sdsServer"`
+			SdsClientEnvoy           []CertificateConfiguration `json:"sdsClientEnvoy"`
 		} `json:"deploy"`
 		Proxy struct {
-			Server []CertificateConfig `json:"server"`
-			Client []CertificateConfig `json:"client"`
+			Server []CertificateConfiguration `json:"server"`
+			Client []CertificateConfiguration `json:"client"`
 		} `json:"proxy"`
 		Backend struct {
-			Api  []CertificateConfig `json:"api"`
-			Site []CertificateConfig `json:"site"`
+			Api  []CertificateConfiguration `json:"api"`
+			Site []CertificateConfiguration `json:"site"`
 		} `json:"backend"`
 	} `json:"areas"`
 }
@@ -126,6 +129,7 @@ type ServerSetupCloudConfiguration struct {
 }
 
 type ServerSetupConfiguration struct {
+	configDir      string
 	ProxyListener  ListenerConfig                       `json:"proxyListener"`
 	ServerListener ListenerConfig                       `json:"serverListener"`
 	SdsListener    ListenerConfig                       `json:"sdsListener"`
@@ -133,8 +137,41 @@ type ServerSetupConfiguration struct {
 	Cloud          ServerSetupCloudConfiguration        `json:"cloud"`
 }
 
-func newSetupConfiguration(configDir string) (*ServerSetupConfiguration, error) {
-	config := ServerSetupConfiguration{}
-	err := loadConfigFromFile(path.Join(configDir, "setup", "server.json"), &config)
-	return &config, err
+func (c ServerSetupConfiguration) TmpPath() string {
+	return path.Join(c.configDir, "tmp")
+}
+
+func (c ServerSetupConfiguration) ScriptsPath() string {
+	return path.Join(c.configDir, "scripts")
+}
+
+func newServerSetupConfiguration(ctx app_context.AppContext) (config ServerSetupConfiguration, err error) {
+
+	configDir, err := GetConfigurationsDir(ctx)
+	if err != nil {
+		return
+	}
+	configRootDir, err := GetConfigurationsRootDir(ctx)
+	if err != nil {
+		return
+	}
+
+	config = ServerSetupConfiguration{
+		configDir: configDir,
+	}
+	configPath := path.Join(configRootDir, "setup")
+	err = loadConfigFromFile(path.Join(configPath, "server.json"), &config)
+	return
+}
+
+func GetServerSetupConfiguration(ctx app_context.AppContext) (config ServerSetupConfiguration, err error) {
+
+	if err = app_context.VerifyElevated(ctx); err != nil {
+		return
+	}
+	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+		return
+	}
+
+	return newServerSetupConfiguration(ctx)
 }

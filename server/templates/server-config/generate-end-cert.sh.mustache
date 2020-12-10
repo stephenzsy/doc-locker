@@ -33,13 +33,13 @@ extendedKeyUsage=critical,clientAuth
 {{#useKeyPair}}
 keyUsage=critical,dataEncipherment
 {{/useKeyPair}}
-{{^useKeyPair}}
+{{#hasSANs}}
 subjectAltName = @alt_names
 [ alt_names ]
 {{#sans.ips}}
 IP.{{{index}}} = {{{value}}}
 {{/sans.ips}}
-{{/useKeyPair}}
+{{/hasSANs}}
 EOF
 
 # create CSR
