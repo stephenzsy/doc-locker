@@ -43,12 +43,13 @@ func ParseCertificateChainFromPemFile(filename string) (certificateChain []*x509
 	}
 	var pemBlock *pem.Block
 	var cert *x509.Certificate
+	certificateChain = make([]*x509.Certificate, 0, 3)
 	for {
 		pemBlock, fileBytes = pem.Decode(fileBytes)
-		cert, err = x509.ParseCertificate(pemBlock.Bytes)
-		if cert == nil {
+		if pemBlock == nil {
 			break
 		}
+		cert, err = x509.ParseCertificate(pemBlock.Bytes)
 		if err != nil {
 			return
 		}

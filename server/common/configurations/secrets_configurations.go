@@ -1,6 +1,7 @@
 package configurations
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
@@ -101,6 +102,11 @@ func (c SecretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretNam
 	return path.Join(c.configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", secretType, secretName))
 }
 
+func (c SecretsConfiguration) GetECPrivateKey(secretsType SecretType, secretName SecretName) (*ecdsa.PrivateKey, error) {
+	filePath := c.GetPrivateKeyPath(secretsType, secretName)
+	return crypto_utils.ParseECPrivateKeyFromPemFile(filePath)
+}
+
 func (c SecretsConfiguration) GetRsaPrivateKey(secretsType SecretType, secretName SecretName) (*rsa.PrivateKey, error) {
 	filePath := c.GetPrivateKeyPath(secretsType, secretName)
 	return crypto_utils.ParseRsaPrivateKeyFromPemFile(filePath)
@@ -113,7 +119,11 @@ func (c SecretsConfiguration) GetCertificate(secretsType SecretType, secretName 
 
 func (c SecretsConfiguration) GetCertificateChain(secretsType SecretType, secretName SecretName) ([]*x509.Certificate, error) {
 	filePath := c.GetCertPath(secretsType, secretName)
-	return crypto_utils.ParseCertificateChainFromPemFile(filePath)
+	certificates, err := crypto_utils.ParseCertificateChainFromPemFile(filePath)
+	if err != nil {
+		return certificates, fmt.Errorf("Failed to parse certificate chain from file %s: %v", filePath, err)
+	}
+	return certificates, err
 }
 
 func GetSecretsConfiguration(ctx app_context.AppContext) (config SecretsConfiguration, err error) {
