@@ -24,7 +24,7 @@ RUN apt install getenvoy-envoy \
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ENV NODE_VERSION 15.3.0
+ENV NODE_VERSION 15.4.0
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
@@ -66,7 +66,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && node --version \
   && npm --version
 
-ENV YARN_VERSION 1.22.10
+ENV YARN_VERSION 1.22.5
 
 RUN set -ex \
   && for key in \

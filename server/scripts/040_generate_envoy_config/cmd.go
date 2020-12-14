@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,13 +9,19 @@ import (
 	"path"
 
 	"github.com/cbroglie/mustache"
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 )
 
-func genEnvoy(templatesDir string, serverSetupConfig *configurations.ServerSetupConfiguration) {
+func genEnvoy(
+	ctx app_context.AppContext,
+	templatesDir string,
+	serverSetupConfig configurations.ServerSetupConfiguration) (e error) {
 	templateFilename := path.Join(templatesDir, "envoy.yaml.mustache")
-	configs := configurations.Configurations()
-	configDir := configs.ConfigRootDir()
+	configDir, e := configurations.GetConfigurationsDir(ctx)
+	if e != nil {
+		return
+	}
 	rendered, e := mustache.RenderFile(templateFilename, map[string]interface{}{
 		"sdsServer": map[string]interface{}{
 			"address":   serverSetupConfig.SdsListener.Address,
@@ -35,12 +42,13 @@ func genEnvoy(templatesDir string, serverSetupConfig *configurations.ServerSetup
 		},
 	})
 	if e != nil {
-		log.Fatal(e)
+		return
 	}
 	e = ioutil.WriteFile(path.Join(configDir, "envoy", "envoy-config.yaml"), []byte(rendered), 0644)
 	if e != nil {
-		log.Fatal(e)
+		return
 	}
+	return
 }
 
 func main() {
@@ -49,11 +57,16 @@ func main() {
 		log.Fatal("environment name is null: DOCLOCKER_SETUP_TEMPLATES_DIR")
 	}
 	serverConfigTemplatePath = path.Join(serverConfigTemplatePath, "server-config")
-	serverSetupConfig, e := configurations.Configurations().ServerSetup()
+	serviceContext, e := app_context.NewAppServiceContext(context.Background(), app_context.WellKnownCallerdBootstrap)
 	if e != nil {
 		log.Fatal(e)
 	}
-	genEnvoy(
-		serverConfigTemplatePath,
-		serverSetupConfig)
+	serviceContext = serviceContext.Elevate()
+	serverSetupConfig, e := configurations.GetServerSetupConfiguration(serviceContext)
+	if e != nil {
+		log.Fatal(e)
+	}
+	if e = genEnvoy(serviceContext, serverConfigTemplatePath, serverSetupConfig); e != nil {
+		log.Fatal(e)
+	}
 }
