@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import "./App.css";
 import { AppContextProvider } from "./AppContext";
-import { AwsCognitoAuthContextProvider } from "./auth/AwsCognitoAuthContext";
+import { AuthContextProvider } from "./auth/AuthContext";
 import { LoginPage } from "./auth/LoginPage";
 import { Host } from "./host/host";
 import { Settings } from "./settings/Settings";
@@ -17,7 +17,7 @@ import { Settings } from "./settings/Settings";
 function App(): JSX.Element {
   return (
     <AppContextProvider>
-      <AwsCognitoAuthContextProvider>
+      <AuthContextProvider>
         <BrowserRouter>
           <div>
             <AppBarTabs />
@@ -37,7 +37,7 @@ function App(): JSX.Element {
             </Switch>
           </div>
         </BrowserRouter>
-      </AwsCognitoAuthContextProvider>
+      </AuthContextProvider>
     </AppContextProvider>
   );
 }

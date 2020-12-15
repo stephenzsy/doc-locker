@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
@@ -14,6 +16,8 @@ import (
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
 	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
+	configs_service "github.com/stephenzsy/doc-locker/server/configurations"
+	configurationsService "github.com/stephenzsy/doc-locker/server/gen/configurations"
 	hostService "github.com/stephenzsy/doc-locker/server/gen/host"
 	"github.com/stephenzsy/doc-locker/server/host"
 	"github.com/stephenzsy/doc-locker/server/sds"
@@ -41,12 +45,24 @@ func serveSds() (err error) {
 	if err != nil {
 		return
 	}
-	creds, err := credentials.NewServerTLSFromFile(
+	cert, err := tls.LoadX509KeyPair(
 		secretsConfig.GetCertPath(configurations.SecretTypeServer, configurations.SecretNameDeploySds),
 		secretsConfig.GetPrivateKeyPath(configurations.SecretTypeServer, configurations.SecretNameDeploySds))
 	if err != nil {
 		return fmt.Errorf("Failed to generate credentials %v", err)
 	}
+	certChain, err := secretsConfig.GetCertificateChain(configurations.SecretTypeServer, configurations.SecretNameDeploySds)
+	if err != nil {
+		return
+	}
+	clientCaPool := x509.NewCertPool()
+	clientCaPool.AddCert(certChain[len(certChain)-1])
+
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientCAs:    clientCaPool,
+	})
 	sdsOpts := []grpc.ServerOption{grpc.Creds(creds)}
 
 	sdsGrpcServer := grpc.NewServer(sdsOpts...)
@@ -68,6 +84,11 @@ func main() {
 		}
 		return
 	}
+	ctx, err := app_context.NewAppServiceContext(context.Background(), auth.ServiceCallerIdConfigurations)
+	if err != nil {
+		return
+	}
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 11000))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -75,6 +96,11 @@ func main() {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	hostService.RegisterHostServiceServer(grpcServer, &host.HostServiceServer{})
+	configsService, err := configs_service.NewServer(ctx)
+	if err != nil {
+		log.Panic(err)
+	}
+	configurationsService.RegisterConfigurationsServiceServer(grpcServer, &configsService)
 
 	grpcServer.Serve(lis)
 }

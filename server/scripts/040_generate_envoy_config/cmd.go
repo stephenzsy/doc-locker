@@ -39,7 +39,7 @@ func genEnvoy(
 		"proxy": map[string]interface{}{
 			"address":     serverSetupConfig.ProxyListener.Address,
 			"portValue":   serverSetupConfig.ProxyListener.Port,
-			"sdsCertName": fmt.Sprintf("%s-%s", configurations.SecretTypeServer, configurations.SecretNameProxy),
+			"sdsCertName": fmt.Sprintf("%s-%s", configurations.SecretNameDeploySdsEnvoy, configurations.SecretNameDeploySdsEnvoy),
 		},
 	})
 	if e != nil {

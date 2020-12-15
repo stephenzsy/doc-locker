@@ -22,6 +22,8 @@ import (
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 	sds_provisioner "github.com/stephenzsy/doc-locker/server/sds/provisioners"
 	sds_provisioner_azure "github.com/stephenzsy/doc-locker/server/sds/provisioners/azure"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 )
 
 func getWhitelistedSdsSecretFromString(str string) (secretType configurations.SecretType, secretName configurations.SecretName, err error) {
@@ -36,6 +38,7 @@ func getWhitelistedSdsSecretFromString(str string) (secretType configurations.Se
 }
 
 type server struct {
+	secretservice.UnimplementedSecretDiscoveryServiceServer
 	serviceContext  app_context.AppContext
 	certProvisioner sds_provisioner.CertificatesProvisioner
 }
@@ -63,6 +66,19 @@ type certsEntry struct {
 }
 
 func (s *server) StreamSecrets(stream secretservice.SecretDiscoveryService_StreamSecretsServer) (err error) {
+	peer, ok := peer.FromContext(stream.Context())
+	if !ok {
+		return errors.New("Peering failed")
+	}
+	fmt.Print(peer.AuthInfo)
+	tfsAuthInfo, ok := peer.AuthInfo.(credentials.TLSInfo)
+	if !ok {
+		return errors.New("Peering AuthInfo failed")
+	}
+	if len(tfsAuthInfo.State.VerifiedChains) <= 0 {
+		return errors.New("Unauthenticated")
+	}
+	fmt.Println(tfsAuthInfo.State.VerifiedChains[0][0].Subject.CommonName)
 	ctx, err := app_context.NewAppRequestContext(stream.Context(), s.serviceContext, auth.ServiceCallerIdSds)
 	if err != nil {
 		return

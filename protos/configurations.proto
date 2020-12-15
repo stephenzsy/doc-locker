@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package doclocker.configurations;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/stephenzsy/doc-locker/server/gen/configurations";
+
+message SiteConfigurationsRequest {
+}
+
+message SiteConfigurationsResponse {
+    google.protobuf.Struct siteConfigurations = 1;
+}
+
+service ConfigurationsService {
+    rpc SiteConfigurations(SiteConfigurationsRequest) returns (SiteConfigurationsResponse);
+}

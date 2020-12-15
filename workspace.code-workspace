@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../doc-locker-config"
+		},
+		{
+			"path": "protos"
 		}
 	],
 	"settings": {
