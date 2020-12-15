@@ -17,6 +17,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	any "github.com/golang/protobuf/ptypes/any"
 	"github.com/google/uuid"
+	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 	sds_provisioner "github.com/stephenzsy/doc-locker/server/sds/provisioners"
 	sds_provisioner_azure "github.com/stephenzsy/doc-locker/server/sds/provisioners/azure"
@@ -34,15 +36,17 @@ func getWhitelistedSdsSecretFromString(str string) (secretType configurations.Se
 }
 
 type server struct {
+	serviceContext  app_context.AppContext
 	certProvisioner sds_provisioner.CertificatesProvisioner
 }
 
-func NewServer(ctx context.Context) (s server, err error) {
-	certProvisioner, err := sds_provisioner_azure.NewAzureCertificatesProvisioner()
+func NewServer(ctx app_context.AppContext) (s server, err error) {
+	certProvisioner, err := sds_provisioner_azure.NewAzureCertificatesProvisioner(ctx.Elevate())
 	if err != nil {
 		return
 	}
 	s = server{
+		serviceContext:  ctx,
 		certProvisioner: certProvisioner,
 	}
 	return
@@ -59,7 +63,10 @@ type certsEntry struct {
 }
 
 func (s *server) StreamSecrets(stream secretservice.SecretDiscoveryService_StreamSecretsServer) (err error) {
-	ctx := stream.Context()
+	ctx, err := app_context.NewAppRequestContext(stream.Context(), s.serviceContext, auth.ServiceCallerIdSds)
+	if err != nil {
+		return
+	}
 	errCh := make(chan error)
 	reqCh := make(chan *discovery.DiscoveryRequest)
 
@@ -93,18 +100,16 @@ func (s *server) StreamSecrets(stream secretservice.SecretDiscoveryService_Strea
 			}
 			// Do not validate nonce/version if we're restarting the server
 			if req != nil {
-				log.Print(req)
 				switch {
 				case nonce != req.ResponseNonce:
-					// srv.logRequest(ctx, r, "Invalid responseNonce", t1, fmt.Errorf("invalid responseNonce"))
 					continue
 				case req.VersionInfo == "": // initial request
 					versionInfo = s.versionInfo()
 				case req.VersionInfo == versionInfo: // ACK
-					//srv.logRequest(ctx, r, "ACK", t1, nil)
 					continue
-				default: // it should not go here
-					versionInfo = s.versionInfo()
+				default:
+					// it should not go here
+					log.Panic(req)
 				}
 			} else {
 				versionInfo = s.versionInfo()

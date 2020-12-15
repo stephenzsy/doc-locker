@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 )
 
 type ListenerConfig struct {
@@ -169,7 +170,7 @@ func GetServerSetupConfiguration(ctx app_context.AppContext) (config ServerSetup
 	if err = app_context.VerifyElevated(ctx); err != nil {
 		return
 	}
-	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+	if err = app_context.VerifyCallerId(ctx, auth.SystemCallerIdBootstrap); err != nil {
 		return
 	}
 

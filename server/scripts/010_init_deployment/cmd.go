@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 )
 
@@ -27,7 +28,7 @@ func main() {
 		newFs.Parse(os.Args[2:])
 		// create new deployment Id
 		deploymentId := time.Now().UTC().Format("20060102150405")
-		serviceContext := app_context.NewInitializeAppServiceContext(context.Background(), app_context.WellKnownCallerdBootstrap, deploymentId).Elevate()
+		serviceContext := app_context.NewInitializeAppServiceContext(context.Background(), auth.SystemCallerIdBootstrap, deploymentId).Elevate()
 		rootDir, err := configurations.GetConfigurationsRootDir(serviceContext)
 		if err != nil {
 			log.Fatal(err)

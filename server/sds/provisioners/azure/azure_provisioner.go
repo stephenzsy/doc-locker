@@ -1,7 +1,6 @@
 package azure
 
 import (
-	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -89,7 +88,7 @@ func NewAzureCertificatesProvisioner(ctx app_context.AppContext) (p *provisioner
 	return
 }
 
-func (p *provisioner) FetchCertificateWithPrivateKey(ctx context.Context,
+func (p *provisioner) FetchCertificateWithPrivateKey(ctx app_context.AppContext,
 	secretType configurations.SecretType,
 	secretName configurations.SecretName) (certificates []*pem.Block, privateKey *pem.Block, err error) {
 	certificateName, err := getAzureKeyVaultCertificateName(secretType, secretName)

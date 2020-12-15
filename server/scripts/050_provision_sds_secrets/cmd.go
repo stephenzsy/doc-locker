@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 	sds_provisioner_azure "github.com/stephenzsy/doc-locker/server/sds/provisioners/azure"
 )
@@ -26,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	serviceContext, err := app_context.NewAppServiceContext(context.Background(), app_context.WellKnownCallerdBootstrap)
+	serviceContext, err := app_context.NewAppServiceContext(context.Background(), auth.SystemCallerIdBootstrap)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
@@ -104,7 +105,7 @@ func GetServerDeploymentConfigurationFile(ctx app_context.AppContext) (config De
 		return
 	}
 
-	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+	if err = app_context.VerifyCallerId(ctx, auth.SystemCallerIdBootstrap, auth.ServiceCallerIdSds); err != nil {
 		return
 	}
 

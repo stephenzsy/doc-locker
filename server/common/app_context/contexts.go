@@ -18,12 +18,6 @@ type appContextValue struct {
 	deployment appContextDeployment
 }
 
-const (
-	WellKnownCallerdNone      string = "system:none"
-	WellKnownCallerdAnonymous string = "system:anonymouse"
-	WellKnownCallerdBootstrap string = "system:bootstrap"
-)
-
 type appContextCaller struct {
 	id string
 }
@@ -43,9 +37,9 @@ func (c appContextDeployment) Id() string {
 type AppContext interface {
 	context.Context
 	Caller() appContextCaller
-	Deployment() appContextDeployment
 	Elevate() AppContext
 	IsElevated() bool
+	Deployment() appContextDeployment
 }
 
 type appContext struct {
@@ -99,4 +93,18 @@ func NewAppServiceContext(parent context.Context, callerId string) (AppContext, 
 	}
 
 	return NewInitializeAppServiceContext(parent, callerId, deploymentId), nil
+}
+
+func NewAppRequestContext(parent context.Context, serviceContext AppContext, callerId string) (AppContext, error) {
+	deployment := serviceContext.Deployment()
+	ctx := context.WithValue(parent, appContextKeyApp, appContextValue{
+		elevated: false,
+		caller: appContextCaller{
+			id: callerId,
+		},
+		deployment: deployment,
+	})
+	return appContext{
+		ctx,
+	}, nil
 }

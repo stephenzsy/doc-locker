@@ -12,6 +12,7 @@ import (
 	"log"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
@@ -82,7 +83,7 @@ func updateAzureConfigurations(
 }
 
 func main() {
-	serviceContext, err := app_context.NewAppServiceContext(context.Background(), app_context.WellKnownCallerdBootstrap)
+	serviceContext, err := app_context.NewAppServiceContext(context.Background(), auth.SystemCallerIdBootstrap)
 	serviceContext = serviceContext.Elevate()
 	if err != nil {
 		log.Fatal(err)

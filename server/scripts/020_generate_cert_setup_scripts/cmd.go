@@ -10,6 +10,7 @@ import (
 
 	"github.com/cbroglie/mustache"
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/configurations"
 )
 
@@ -153,7 +154,7 @@ func main() {
 		log.Fatal("environment name is null: DOCLOCKER_SETUP_TEMPLATES_DIR")
 	}
 	serverConfigTemplatesPathBase = path.Join(serverConfigTemplatePath, "server-config")
-	serviceContext, e := app_context.NewAppServiceContext(context.Background(), app_context.WellKnownCallerdBootstrap)
+	serviceContext, e := app_context.NewAppServiceContext(context.Background(), auth.SystemCallerIdBootstrap)
 	if e != nil {
 		log.Fatal(e)
 	}

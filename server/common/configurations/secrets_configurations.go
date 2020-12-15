@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
+	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
@@ -86,38 +87,48 @@ func (s *SecretName) UnmarshalJSON(data []byte) error {
 	return s.FromString(str)
 }
 
-type SecretsConfiguration struct {
+type SecretsConfiguration interface {
+	GetCaPath(caRole CaRole) string
+	GetCertPath(secretType SecretType, secretName SecretName) string
+	GetPrivateKeyPath(secretType SecretType, secretName SecretName) string
+	GetECPrivateKey(secretsType SecretType, secretName SecretName) (*ecdsa.PrivateKey, error)
+	GetRsaPrivateKey(secretsType SecretType, secretName SecretName) (*rsa.PrivateKey, error)
+	GetCertificate(secretsType SecretType, secretName SecretName) (*x509.Certificate, error)
+	GetCertificateChain(secretsType SecretType, secretName SecretName) ([]*x509.Certificate, error)
+}
+
+type secretsConfiguration struct {
 	configDir string
 }
 
-func (c SecretsConfiguration) GetCaPath(caRole CaRole) string {
+func (c secretsConfiguration) GetCaPath(caRole CaRole) string {
 	return path.Join(c.configDir, "certs", fmt.Sprintf("%s-%s.pem", SecretTypeCa, caRole))
 }
 
-func (c SecretsConfiguration) GetCertPath(secretType SecretType, secretName SecretName) string {
+func (c secretsConfiguration) GetCertPath(secretType SecretType, secretName SecretName) string {
 	return path.Join(c.configDir, "certs", fmt.Sprintf("%s-cert-%s.pem", secretType, secretName))
 }
 
-func (c SecretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretName SecretName) string {
+func (c secretsConfiguration) GetPrivateKeyPath(secretType SecretType, secretName SecretName) string {
 	return path.Join(c.configDir, "certsk", fmt.Sprintf("%s-key-%s.pem", secretType, secretName))
 }
 
-func (c SecretsConfiguration) GetECPrivateKey(secretsType SecretType, secretName SecretName) (*ecdsa.PrivateKey, error) {
+func (c secretsConfiguration) GetECPrivateKey(secretsType SecretType, secretName SecretName) (*ecdsa.PrivateKey, error) {
 	filePath := c.GetPrivateKeyPath(secretsType, secretName)
 	return crypto_utils.ParseECPrivateKeyFromPemFile(filePath)
 }
 
-func (c SecretsConfiguration) GetRsaPrivateKey(secretsType SecretType, secretName SecretName) (*rsa.PrivateKey, error) {
+func (c secretsConfiguration) GetRsaPrivateKey(secretsType SecretType, secretName SecretName) (*rsa.PrivateKey, error) {
 	filePath := c.GetPrivateKeyPath(secretsType, secretName)
 	return crypto_utils.ParseRsaPrivateKeyFromPemFile(filePath)
 }
 
-func (c SecretsConfiguration) GetCertificate(secretsType SecretType, secretName SecretName) (*x509.Certificate, error) {
+func (c secretsConfiguration) GetCertificate(secretsType SecretType, secretName SecretName) (*x509.Certificate, error) {
 	filePath := c.GetCertPath(secretsType, secretName)
 	return crypto_utils.ParseCertificateFromPemFile(filePath)
 }
 
-func (c SecretsConfiguration) GetCertificateChain(secretsType SecretType, secretName SecretName) ([]*x509.Certificate, error) {
+func (c secretsConfiguration) GetCertificateChain(secretsType SecretType, secretName SecretName) ([]*x509.Certificate, error) {
 	filePath := c.GetCertPath(secretsType, secretName)
 	certificates, err := crypto_utils.ParseCertificateChainFromPemFile(filePath)
 	if err != nil {
@@ -131,7 +142,7 @@ func GetSecretsConfiguration(ctx app_context.AppContext) (config SecretsConfigur
 	if err = app_context.VerifyElevated(ctx); err != nil {
 		return
 	}
-	if err = app_context.VerifyCallerId(ctx, app_context.WellKnownCallerdBootstrap); err != nil {
+	if err = app_context.VerifyCallerId(ctx, auth.SystemCallerIdBootstrap, auth.ServiceCallerIdSds); err != nil {
 		return
 	}
 
@@ -139,7 +150,7 @@ func GetSecretsConfiguration(ctx app_context.AppContext) (config SecretsConfigur
 	if err != nil {
 		return
 	}
-	config = SecretsConfiguration{
+	config = secretsConfiguration{
 		configDir: configDir,
 	}
 

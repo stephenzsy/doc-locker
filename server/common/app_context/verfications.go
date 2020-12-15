@@ -15,9 +15,11 @@ func VerifyElevated(ctx AppContext) error {
 	return nil
 }
 
-func VerifyCallerId(ctx AppContext, expectedCallerId string) error {
-	if ctx.Caller().Id() != expectedCallerId {
-		return getVerificationError("callerId not allowed")
+func VerifyCallerId(ctx AppContext, expectedCallerIds ...string) error {
+	for _, expectedCallerId := range expectedCallerIds {
+		if ctx.Caller().Id() == expectedCallerId {
+			return nil
+		}
 	}
-	return nil
+	return getVerificationError(fmt.Sprintf("callerId not allowed: %s", ctx.Caller().Id()))
 }
