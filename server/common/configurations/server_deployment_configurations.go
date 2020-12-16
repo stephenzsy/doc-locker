@@ -6,12 +6,12 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"time"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
-	"github.com/stephenzsy/doc-locker/server/common/auth"
 	"github.com/stephenzsy/doc-locker/server/common/crypto_utils"
 )
 
@@ -25,8 +25,13 @@ type DeploymentCloudConfigurationAzurePublic struct {
 	ServicePrincipalCertificate []byte    `json:"servicePrincipalCertificate"`
 }
 
+type DeploymentCloudConfigurationAwsPublic struct {
+	ServerSetupCloudAwsConfiguration
+}
+
 type DeploymentCloudConfigurationPublic struct {
 	Azure DeploymentCloudConfigurationAzurePublic `json:"azure"`
+	Aws   DeploymentCloudConfigurationAwsPublic   `json:"aws"`
 }
 
 type DeploymentConfigurationFile struct {
@@ -65,6 +70,7 @@ func (c *DeploymentConfigurationFile) GetPrivateConfig(privateKey *rsa.PrivateKe
 		var decrypted []byte
 		decrypted, err = crypto_utils.AESDecrypt(encryptionKey, &c.Secret)
 		if err != nil {
+			log.Panic(err)
 			return
 		}
 		err = json.Unmarshal(decrypted, &privateConfig)
@@ -102,10 +108,6 @@ func (c *DeploymentConfigurationFile) Save(ctx app_context.AppContext) error {
 
 func GetServerDeploymentConfigurationFile(ctx app_context.AppContext) (config DeploymentConfigurationFile, err error) {
 	if err = app_context.VerifyElevated(ctx); err != nil {
-		return
-	}
-
-	if err = app_context.VerifyCallerId(ctx, auth.SystemCallerIdBootstrap, auth.ServiceCallerIdSds); err != nil {
 		return
 	}
 

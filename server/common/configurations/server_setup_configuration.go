@@ -125,8 +125,16 @@ type ServerSetupCloudAzureConfiguration struct {
 	KeyVaultBaseUrl     string `json:"keyVaultBaseUrl"`
 }
 
+type ServerSetupCloudAwsConfiguration struct {
+	CognitoIdentityPoolId      string `json:"cognitoIdentityPoolId"`
+	CognitoRegion              string `json:"cognitoRegion"`
+	CognitoUserPoolId          string `json:"cognitoUserPoolId"`
+	CognitoUserPoolWebClientId string `json:"cognitoUserPoolWebClientId"`
+}
+
 type ServerSetupCloudConfiguration struct {
 	Azure ServerSetupCloudAzureConfiguration `json:"azure"`
+	Aws   ServerSetupCloudAwsConfiguration   `json:"aws"`
 }
 
 type ServerSetupConfiguration struct {

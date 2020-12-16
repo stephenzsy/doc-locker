@@ -32,6 +32,17 @@ func UpdateEncryptionMaterial(ctx app_context.AppContext, config *configurations
 	return privateKey, err
 }
 
+func updateAwsConfigurations(
+	ctx app_context.AppContext,
+	c *configurations.DeploymentConfigurationFile) (err error) {
+	serverSetupConfig, err := configurations.GetServerSetupConfiguration(ctx)
+	if err != nil {
+		return
+	}
+	c.Cloud.Aws.ServerSetupCloudAwsConfiguration = serverSetupConfig.Cloud.Aws
+	return
+}
+
 func updateAzureConfigurations(
 	ctx app_context.AppContext,
 	c *configurations.DeploymentConfigurationFile,
@@ -39,6 +50,7 @@ func updateAzureConfigurations(
 
 	serverSetupConfig, err := configurations.GetServerSetupConfiguration(ctx)
 	if err != nil {
+		log.Panic(err)
 		return
 	}
 	c.Cloud.Azure.ServerSetupCloudAzureConfiguration = serverSetupConfig.Cloud.Azure
@@ -46,12 +58,14 @@ func updateAzureConfigurations(
 	// service principal
 	secretsConfiguration, err := configurations.GetSecretsConfiguration(ctx)
 	if err != nil {
+		log.Panic(err)
 		return
 	}
 	certificate, err := secretsConfiguration.GetCertificate(
 		configurations.SecretTypeClient,
 		configurations.SecretNameDeploySdsAzureServicePrincipal)
 	if err != nil {
+		log.Panic(err)
 		return
 	}
 	c.Cloud.Azure.ServicePrincipalCertificate = certificate.Raw
@@ -61,6 +75,7 @@ func updateAzureConfigurations(
 	// private configuration
 	privateConfig, encryptionKey, err := c.GetPrivateConfig(privateKey)
 	if err != nil {
+		log.Panic(err)
 		return err
 	}
 
@@ -69,15 +84,17 @@ func updateAzureConfigurations(
 			configurations.SecretTypeClient,
 			configurations.SecretNameDeploySdsAzureServicePrincipal))
 	if err != nil {
+		log.Panic(err)
 		return err
 	}
 	pemBlock, _ := pem.Decode(servicePrincipalPrivateKeyContent)
 	_, err = x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 	if err != nil {
+		log.Panic(err)
 		return err
 	}
 	privateConfig.Cloud.Azure.ServicePrincipalPrivateKey = pemBlock.Bytes
-	c.SetPrivateConfig(&privateKey.PublicKey, encryptionKey, privateConfig)
+	err = c.SetPrivateConfig(&privateKey.PublicKey, encryptionKey, privateConfig)
 
 	return
 }
@@ -86,27 +103,31 @@ func main() {
 	serviceContext, err := app_context.NewAppServiceContext(context.Background(), auth.SystemCallerIdBootstrap)
 	serviceContext = serviceContext.Elevate()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	deploymentConfig, err := configurations.GetServerDeploymentConfigurationFile(serviceContext)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	if deploymentConfig.Version == 0 {
 		// no configuration file
 		privateKey, err := UpdateEncryptionMaterial(serviceContext, &deploymentConfig)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		err = updateAzureConfigurations(serviceContext, &deploymentConfig, privateKey)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
+		}
+		err = updateAwsConfigurations(serviceContext, &deploymentConfig)
+		if err != nil {
+			log.Panic(err)
 		}
 		deploymentConfig.Version = 1
 	}
 	err = deploymentConfig.Save(serviceContext)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }

@@ -2,11 +2,11 @@ package configurations
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
 	configs "github.com/stephenzsy/doc-locker/server/common/configurations"
 	configs_service "github.com/stephenzsy/doc-locker/server/gen/configurations"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type server struct {
@@ -16,7 +16,7 @@ type server struct {
 }
 
 func NewServer(ctx app_context.AppContext) (s server, err error) {
-	data, err := configs.GetServerDeploymentConfigurationFile(ctx)
+	data, err := configs.GetServerDeploymentConfigurationFile(ctx.Elevate())
 	s = server{
 		serviceContext:    ctx,
 		deploymentConfigs: data,
@@ -24,18 +24,36 @@ func NewServer(ctx app_context.AppContext) (s server, err error) {
 	return
 }
 
+type siteConfigurationsAwsData struct {
+	CognitoIdentityPoolId      string `json:"cognitoIdentityPoolId"`
+	CognitoRegion              string `json:"cognitoRegion"`
+	CognitoUserPoolId          string `json:"cognitoUserPoolId"`
+	CognitoUserPoolWebClientId string `json:"cognitoUserPoolWebClientId"`
+}
+
+type siteConfigurationsData struct {
+	Aws siteConfigurationsAwsData `json:"aws"`
+}
+
 func (s *server) SiteConfigurations(context context.Context, req *configs_service.SiteConfigurationsRequest) (
 	response *configs_service.SiteConfigurationsResponse, err error) {
-	c, err := structpb.NewStruct(map[string](interface{}){
-		"azure": map[string](interface{}){
-			"applicationId": s.deploymentConfigs.Cloud.Azure.ApplicationId,
+	data := siteConfigurationsData{
+		Aws: siteConfigurationsAwsData{
+			CognitoIdentityPoolId:      s.deploymentConfigs.Cloud.Aws.CognitoIdentityPoolId,
+			CognitoRegion:              s.deploymentConfigs.Cloud.Aws.CognitoRegion,
+			CognitoUserPoolId:          s.deploymentConfigs.Cloud.Aws.CognitoUserPoolId,
+			CognitoUserPoolWebClientId: s.deploymentConfigs.Cloud.Aws.CognitoUserPoolWebClientId,
 		},
-	})
+	}
+	if err != nil {
+		return
+	}
+	marshalled, err := json.Marshal(data)
 	if err != nil {
 		return
 	}
 	response = &configs_service.SiteConfigurationsResponse{
-		SiteConfigurations: c,
+		SiteConfigurationsJson: string(marshalled),
 	}
 	return
 }
