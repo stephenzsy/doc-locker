@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package doclocker.file;
+
+option go_package = "github.com/stephenzsy/doc-locker/server/gen/file";
+
+message FileMetadata {
+}
+
+message AwsS3FileDestination {
+    string name = 1;
+    string region = 2;
+    string bucketName = 3;
+    string prefix = 4;
+}
+
+message FileDestination {    
+    oneof destination {
+        AwsS3FileDestination aws = 1;
+    }
+}
+
+message UploadFileRequest {
+    string id = 1;
+    uint32 chunkOffset = 2;
+    oneof data {
+        bytes           chunk = 3;
+        FileMetadata    metadata = 4;
+    }
+}
+
+message UploadFileResponse {
+    string id = 1;
+    string destinationName = 2;    
+}
+
+message BeginUploadFileRequest {    
+}
+
+message BeginUploadFileResponse {    
+    string id = 1;
+    repeated FileDestination destinations = 2;
+}
+
+service FileService {
+    rpc BeginUploadFile(BeginUploadFileRequest) returns (BeginUploadFileResponse);
+    rpc UploadFile(stream UploadFileRequest) returns (stream UploadFileResponse);
+}

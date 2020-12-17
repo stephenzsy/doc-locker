@@ -2,15 +2,27 @@ syntax = "proto3";
 
 package doclocker.configurations;
 
-option go_package = "github.com/stephenzsy/doc-locker/server/gen/configurations";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "file.proto";
 
-message SiteConfigurationsRequest {
-}
+option go_package = "github.com/stephenzsy/doc-locker/server/gen/configurations";
 
 message SiteConfigurationsResponse {
     string siteConfigurationsJson = 1;
 }
 
+message UserProfileRequest {
+    string provider = 1;
+    string configPath = 2;
+}
+
+message UserProfileResponse {
+    google.protobuf.Timestamp lastUpdated = 1;
+    repeated doclocker.file.FileDestination fileDestinations = 2;
+}
+
 service ConfigurationsService {
-    rpc SiteConfigurations(SiteConfigurationsRequest) returns (SiteConfigurationsResponse);
+    rpc SiteConfigurations(google.protobuf.Empty) returns (SiteConfigurationsResponse);
+    rpc UserProfile(UserProfileRequest) returns (UserProfileResponse);
 }

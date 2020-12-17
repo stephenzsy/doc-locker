@@ -15,6 +15,12 @@
 const grpc = {};
 grpc.web = require('grpc-web');
 
+
+var google_protobuf_empty_pb = require('google-protobuf/google/protobuf/empty_pb.js')
+
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
+
+var file_pb = require('./file_pb.js')
 const proto = {};
 proto.doclocker = {};
 proto.doclocker.configurations = require('./configurations_pb.js');
@@ -74,16 +80,16 @@ proto.doclocker.configurations.ConfigurationsServicePromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.doclocker.configurations.SiteConfigurationsRequest,
+ *   !proto.google.protobuf.Empty,
  *   !proto.doclocker.configurations.SiteConfigurationsResponse>}
  */
 const methodDescriptor_ConfigurationsService_SiteConfigurations = new grpc.web.MethodDescriptor(
   '/doclocker.configurations.ConfigurationsService/SiteConfigurations',
   grpc.web.MethodType.UNARY,
-  proto.doclocker.configurations.SiteConfigurationsRequest,
+  google_protobuf_empty_pb.Empty,
   proto.doclocker.configurations.SiteConfigurationsResponse,
   /**
-   * @param {!proto.doclocker.configurations.SiteConfigurationsRequest} request
+   * @param {!proto.google.protobuf.Empty} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -96,13 +102,13 @@ const methodDescriptor_ConfigurationsService_SiteConfigurations = new grpc.web.M
 /**
  * @const
  * @type {!grpc.web.AbstractClientBase.MethodInfo<
- *   !proto.doclocker.configurations.SiteConfigurationsRequest,
+ *   !proto.google.protobuf.Empty,
  *   !proto.doclocker.configurations.SiteConfigurationsResponse>}
  */
 const methodInfo_ConfigurationsService_SiteConfigurations = new grpc.web.AbstractClientBase.MethodInfo(
   proto.doclocker.configurations.SiteConfigurationsResponse,
   /**
-   * @param {!proto.doclocker.configurations.SiteConfigurationsRequest} request
+   * @param {!proto.google.protobuf.Empty} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -113,7 +119,7 @@ const methodInfo_ConfigurationsService_SiteConfigurations = new grpc.web.Abstrac
 
 
 /**
- * @param {!proto.doclocker.configurations.SiteConfigurationsRequest} request The
+ * @param {!proto.google.protobuf.Empty} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -134,7 +140,7 @@ proto.doclocker.configurations.ConfigurationsServiceClient.prototype.siteConfigu
 
 
 /**
- * @param {!proto.doclocker.configurations.SiteConfigurationsRequest} request The
+ * @param {!proto.google.protobuf.Empty} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -148,6 +154,86 @@ proto.doclocker.configurations.ConfigurationsServicePromiseClient.prototype.site
       request,
       metadata || {},
       methodDescriptor_ConfigurationsService_SiteConfigurations);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.doclocker.configurations.UserProfileRequest,
+ *   !proto.doclocker.configurations.UserProfileResponse>}
+ */
+const methodDescriptor_ConfigurationsService_UserProfile = new grpc.web.MethodDescriptor(
+  '/doclocker.configurations.ConfigurationsService/UserProfile',
+  grpc.web.MethodType.UNARY,
+  proto.doclocker.configurations.UserProfileRequest,
+  proto.doclocker.configurations.UserProfileResponse,
+  /**
+   * @param {!proto.doclocker.configurations.UserProfileRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.doclocker.configurations.UserProfileResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.doclocker.configurations.UserProfileRequest,
+ *   !proto.doclocker.configurations.UserProfileResponse>}
+ */
+const methodInfo_ConfigurationsService_UserProfile = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.doclocker.configurations.UserProfileResponse,
+  /**
+   * @param {!proto.doclocker.configurations.UserProfileRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.doclocker.configurations.UserProfileResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.doclocker.configurations.UserProfileRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.doclocker.configurations.UserProfileResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.doclocker.configurations.UserProfileResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.doclocker.configurations.ConfigurationsServiceClient.prototype.userProfile =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/doclocker.configurations.ConfigurationsService/UserProfile',
+      request,
+      metadata || {},
+      methodDescriptor_ConfigurationsService_UserProfile,
+      callback);
+};
+
+
+/**
+ * @param {!proto.doclocker.configurations.UserProfileRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.doclocker.configurations.UserProfileResponse>}
+ *     Promise that resolves to the response
+ */
+proto.doclocker.configurations.ConfigurationsServicePromiseClient.prototype.userProfile =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/doclocker.configurations.ConfigurationsService/UserProfile',
+      request,
+      metadata || {},
+      methodDescriptor_ConfigurationsService_UserProfile);
 };
 
 

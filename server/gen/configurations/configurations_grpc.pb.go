@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -17,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConfigurationsServiceClient interface {
-	SiteConfigurations(ctx context.Context, in *SiteConfigurationsRequest, opts ...grpc.CallOption) (*SiteConfigurationsResponse, error)
+	SiteConfigurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SiteConfigurationsResponse, error)
+	UserProfile(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
 }
 
 type configurationsServiceClient struct {
@@ -28,9 +30,18 @@ func NewConfigurationsServiceClient(cc grpc.ClientConnInterface) ConfigurationsS
 	return &configurationsServiceClient{cc}
 }
 
-func (c *configurationsServiceClient) SiteConfigurations(ctx context.Context, in *SiteConfigurationsRequest, opts ...grpc.CallOption) (*SiteConfigurationsResponse, error) {
+func (c *configurationsServiceClient) SiteConfigurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SiteConfigurationsResponse, error) {
 	out := new(SiteConfigurationsResponse)
 	err := c.cc.Invoke(ctx, "/doclocker.configurations.ConfigurationsService/SiteConfigurations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configurationsServiceClient) UserProfile(ctx context.Context, in *UserProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error) {
+	out := new(UserProfileResponse)
+	err := c.cc.Invoke(ctx, "/doclocker.configurations.ConfigurationsService/UserProfile", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +52,8 @@ func (c *configurationsServiceClient) SiteConfigurations(ctx context.Context, in
 // All implementations must embed UnimplementedConfigurationsServiceServer
 // for forward compatibility
 type ConfigurationsServiceServer interface {
-	SiteConfigurations(context.Context, *SiteConfigurationsRequest) (*SiteConfigurationsResponse, error)
+	SiteConfigurations(context.Context, *emptypb.Empty) (*SiteConfigurationsResponse, error)
+	UserProfile(context.Context, *UserProfileRequest) (*UserProfileResponse, error)
 	mustEmbedUnimplementedConfigurationsServiceServer()
 }
 
@@ -49,8 +61,11 @@ type ConfigurationsServiceServer interface {
 type UnimplementedConfigurationsServiceServer struct {
 }
 
-func (UnimplementedConfigurationsServiceServer) SiteConfigurations(context.Context, *SiteConfigurationsRequest) (*SiteConfigurationsResponse, error) {
+func (UnimplementedConfigurationsServiceServer) SiteConfigurations(context.Context, *emptypb.Empty) (*SiteConfigurationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SiteConfigurations not implemented")
+}
+func (UnimplementedConfigurationsServiceServer) UserProfile(context.Context, *UserProfileRequest) (*UserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserProfile not implemented")
 }
 func (UnimplementedConfigurationsServiceServer) mustEmbedUnimplementedConfigurationsServiceServer() {}
 
@@ -66,7 +81,7 @@ func RegisterConfigurationsServiceServer(s grpc.ServiceRegistrar, srv Configurat
 }
 
 func _ConfigurationsService_SiteConfigurations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SiteConfigurationsRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -78,7 +93,25 @@ func _ConfigurationsService_SiteConfigurations_Handler(srv interface{}, ctx cont
 		FullMethod: "/doclocker.configurations.ConfigurationsService/SiteConfigurations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigurationsServiceServer).SiteConfigurations(ctx, req.(*SiteConfigurationsRequest))
+		return srv.(ConfigurationsServiceServer).SiteConfigurations(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigurationsService_UserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigurationsServiceServer).UserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/doclocker.configurations.ConfigurationsService/UserProfile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigurationsServiceServer).UserProfile(ctx, req.(*UserProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -90,6 +123,10 @@ var _ConfigurationsService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SiteConfigurations",
 			Handler:    _ConfigurationsService_SiteConfigurations_Handler,
+		},
+		{
+			MethodName: "UserProfile",
+			Handler:    _ConfigurationsService_UserProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

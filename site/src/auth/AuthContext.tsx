@@ -1,14 +1,18 @@
 import Amplify from "@aws-amplify/core";
+import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 import React from "react";
 import { useAppContext } from "../AppContext";
 import { ConfigurationsServicePromiseClient } from "../generated/configurations_grpc_web_pb";
-import { SiteConfigurationsRequest } from "../generated/configurations_pb";
 
 export interface IAwsSiteConfigurations {
-  cognitoIdenityPoolId: string;
   cognitoRegion: string;
   cognitoUserPoolId: string;
   cognitoUserPoolWebClientId: string;
+  cognitoUserPoolAttributesMapping: {
+    configPath: string;
+    cognitoIdentityPoolId: string;
+    cognitoIdentityPoolRegion: string;
+  };
 }
 
 export interface ISiteConfigurations {
@@ -37,22 +41,20 @@ export function AuthContextProvider(props: {
     const client = new ConfigurationsServicePromiseClient(endpoint);
     (async () => {
       const response = await client.siteConfigurations(
-        new SiteConfigurationsRequest()
+        new Empty()
       );
       const configs = JSON.parse(
         response.getSiteconfigurationsjson()
       ) as ISiteConfigurations;
       console.log(configs);
-      setSiteConfigs(configs);
       Amplify.configure({
         Auth: {
-          // REQUIRED - Amazon Cognito Region
-          identityPoolId: configs.aws.cognitoIdenityPoolId,
           region: configs.aws.cognitoRegion,
           userPoolId: configs.aws.cognitoUserPoolId,
           userPoolWebClientId: configs.aws.cognitoUserPoolWebClientId,
         },
       });
+      setSiteConfigs(configs);
     })();
   }, [endpoint]);
 

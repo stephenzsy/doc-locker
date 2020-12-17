@@ -7,6 +7,7 @@ import (
 	"github.com/stephenzsy/doc-locker/server/common/app_context"
 	configs "github.com/stephenzsy/doc-locker/server/common/configurations"
 	configs_service "github.com/stephenzsy/doc-locker/server/gen/configurations"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type server struct {
@@ -25,24 +26,18 @@ func NewServer(ctx app_context.AppContext) (s server, err error) {
 }
 
 type siteConfigurationsAwsData struct {
-	CognitoIdentityPoolId      string `json:"cognitoIdentityPoolId"`
-	CognitoRegion              string `json:"cognitoRegion"`
-	CognitoUserPoolId          string `json:"cognitoUserPoolId"`
-	CognitoUserPoolWebClientId string `json:"cognitoUserPoolWebClientId"`
+	configs.SharedServerCloudAwsConfiguration
 }
 
 type siteConfigurationsData struct {
 	Aws siteConfigurationsAwsData `json:"aws"`
 }
 
-func (s *server) SiteConfigurations(context context.Context, req *configs_service.SiteConfigurationsRequest) (
+func (s *server) SiteConfigurations(context context.Context, req *emptypb.Empty) (
 	response *configs_service.SiteConfigurationsResponse, err error) {
 	data := siteConfigurationsData{
 		Aws: siteConfigurationsAwsData{
-			CognitoIdentityPoolId:      s.deploymentConfigs.Cloud.Aws.CognitoIdentityPoolId,
-			CognitoRegion:              s.deploymentConfigs.Cloud.Aws.CognitoRegion,
-			CognitoUserPoolId:          s.deploymentConfigs.Cloud.Aws.CognitoUserPoolId,
-			CognitoUserPoolWebClientId: s.deploymentConfigs.Cloud.Aws.CognitoUserPoolWebClientId,
+			SharedServerCloudAwsConfiguration: s.deploymentConfigs.Cloud.Aws.SharedServerCloudAwsConfiguration,
 		},
 	}
 	if err != nil {

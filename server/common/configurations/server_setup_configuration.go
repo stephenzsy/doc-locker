@@ -125,11 +125,19 @@ type ServerSetupCloudAzureConfiguration struct {
 	KeyVaultBaseUrl     string `json:"keyVaultBaseUrl"`
 }
 
+type SharedServerCloudAwsConfiguration struct {
+	CognitoRegion                    string `json:"cognitoRegion"`
+	CognitoUserPoolId                string `json:"cognitoUserPoolId"`
+	CognitoUserPoolWebClientId       string `json:"cognitoUserPoolWebClientId"`
+	CognitoUserPoolAttributesMapping struct {
+		ConfigPath                string `json:"configPath"`
+		CognitoIdentityPoolId     string `json:"cognitoIdentityPoolId"`
+		CognitoIdentityPoolRegion string `json:"cognitoIdentityPoolRegion"`
+	} `json:"cognitoUserPoolAttributesMapping"`
+}
+
 type ServerSetupCloudAwsConfiguration struct {
-	CognitoIdentityPoolId      string `json:"cognitoIdentityPoolId"`
-	CognitoRegion              string `json:"cognitoRegion"`
-	CognitoUserPoolId          string `json:"cognitoUserPoolId"`
-	CognitoUserPoolWebClientId string `json:"cognitoUserPoolWebClientId"`
+	SharedServerCloudAwsConfiguration
 }
 
 type ServerSetupCloudConfiguration struct {
