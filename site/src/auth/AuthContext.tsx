@@ -3,6 +3,7 @@ import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 import React from "react";
 import { useAppContext } from "../AppContext";
 import { ConfigurationsServicePromiseClient } from "../generated/configurations_grpc_web_pb";
+import awsConfig from "../aws-exports";
 
 export interface IAwsSiteConfigurations {
   cognitoRegion: string;
@@ -40,20 +41,12 @@ export function AuthContextProvider(props: {
     }
     const client = new ConfigurationsServicePromiseClient(endpoint);
     (async () => {
-      const response = await client.siteConfigurations(
-        new Empty()
-      );
+      const response = await client.siteConfigurations(new Empty());
       const configs = JSON.parse(
         response.getSiteconfigurationsjson()
       ) as ISiteConfigurations;
       console.log(configs);
-      Amplify.configure({
-        Auth: {
-          region: configs.aws.cognitoRegion,
-          userPoolId: configs.aws.cognitoUserPoolId,
-          userPoolWebClientId: configs.aws.cognitoUserPoolWebClientId,
-        },
-      });
+      Amplify.configure(awsConfig);
       setSiteConfigs(configs);
     })();
   }, [endpoint]);

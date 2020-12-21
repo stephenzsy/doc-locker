@@ -1,23 +1,98 @@
+import { API, GraphQLResult } from "@aws-amplify/api";
 import { Auth, CognitoUser } from "@aws-amplify/auth";
-import { Button, TextField, Typography } from "@material-ui/core";
+import { Button, Card, Col, Form, Input, Row, Space } from "antd";
 import React from "react";
 import { useAppContext } from "../AppContext";
 import { AuthContext } from "../auth/AuthContext";
+import { GetUserProfileQuery } from "../generated/API";
+import { getUserProfile } from "../graphql/queries";
+
+export interface IAwsFileDestination {
+  name: string;
+  cognitoIdentityPoolId: string;
+  cognitoIdentityPoolRegion: string;
+  s3Bucket: string;
+  s3Region: string;
+  s3Prefix: string;
+}
+
+export interface IAwsSettings {
+  version: number;
+  destinations: IAwsFileDestination[];
+}
+
+interface IAwsFileDestinationProps {
+  initialValue: Readonly<IAwsFileDestination> | undefined;
+  onChange: (nextValue: IAwsFileDestination) => void;
+}
+
+function AwsFileDestinationForm(props: IAwsFileDestinationProps): JSX.Element {
+  const { initialValue } = props;
+  const [name, setName] = React.useState<string>(initialValue?.name || "");
+  const [
+    cognitoIdentityPoolId,
+    setCognitoIdentityPoolId,
+  ] = React.useState<string>(initialValue?.cognitoIdentityPoolId || "");
+  const [
+    cognitoIdentityPoolRegion,
+    setCognitoIdentityPoolRegion,
+  ] = React.useState<string>("");
+  const [s3BucketName, setS3BucketName] = React.useState<string>("");
+  const [s3BucketRegion, setS3BucketRegion] = React.useState<string>("");
+  const [s3Prefix, setS3Prefix] = React.useState<string>("");
+
+  const layout = {
+    labelCol: { span: 8 },
+    wrapperCol: { span: 16 },
+  };
+  const tailLayout = {
+    wrapperCol: { offset: 8, span: 16 },
+  };
+
+  const onFinish = React.useCallback((values) => {
+    console.log("Success:", values);
+  }, []);
+
+  const onFinishFailed = React.useCallback((errorInfo) => {
+    console.log("Failed:", errorInfo);
+  }, []);
+
+  return (
+    <Form<IAwsFileDestination>
+      {...layout}
+      name="basic"
+      initialValues={props.initialValue}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+    >
+      <Form.Item
+        label="Name"
+        name="name"
+        rules={[
+          {
+            required: true,
+            message: "Please input the name of the destination",
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item {...tailLayout}>
+        <Button type="primary" htmlType="submit">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+}
 
 function AwsSettingsForm(): JSX.Element | null {
   const { aws } = React.useContext(AuthContext);
+  const { endpoint } = useAppContext();
   const [currentUser, setCurrentUser] = React.useState<CognitoUser | undefined>(
     undefined
   );
-  const [
-    cognitoIdentityPoolIdPending,
-    setCognitoIdentityPoolIdPending,
-  ] = React.useState<string>("");
-  const [
-    cognitoIdentityPoolRegionPending,
-    setCognitoIdentityPoolRegionPending,
-  ] = React.useState<string>("");
-  const [configPathPending, setConfigPathPending] = React.useState<string>("");
   React.useEffect(() => {
     if (aws) {
       (async () => {
@@ -25,83 +100,33 @@ function AwsSettingsForm(): JSX.Element | null {
         if (user) {
           setCurrentUser(user);
         }
-        const attributes = await Auth.userAttributes(user);
-        for (const attr of attributes) {
-          switch (attr.Name) {
-            case aws.cognitoUserPoolAttributesMapping.cognitoIdentityPoolId:
-              setCognitoIdentityPoolIdPending(attr.Value);
-              break;
-            case aws.cognitoUserPoolAttributesMapping.cognitoIdentityPoolRegion:
-              setCognitoIdentityPoolRegionPending(attr.Value);
-              break;
-            case aws.cognitoUserPoolAttributesMapping.configPath:
-              setConfigPathPending(attr.Value);
-              break;
-          }
+        const result = (await API.graphql({
+          query: getUserProfile,
+          variables: { id: "me" },
+        })) as GraphQLResult<GetUserProfileQuery>;
+        const configsString = result.data?.getUserProfile?.awsConfigs;
+        if (!configsString) {
+          return;
         }
-        console.log(attributes);
+        const awsSettings = JSON.parse(configsString) as IAwsSettings;
+        if (awsSettings.version === 1) {
+          // load to UI, otherwise non compatible
+        }
       })();
     }
-  }, [aws, setCognitoIdentityPoolIdPending]);
+  }, [aws, endpoint]);
 
   if (!aws) {
     return null;
   }
 
   return (
-    <form noValidate>
-      <div>
-        <div>
-          <TextField
-            fullWidth
-            label="Cognito Identity Pool ID"
-            value={cognitoIdentityPoolIdPending}
-            onChange={(ev) => {
-              setCognitoIdentityPoolIdPending(ev.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <TextField
-            fullWidth
-            label="Cognito Identity Pool Region"
-            value={cognitoIdentityPoolRegionPending}
-            onChange={(ev) => {
-              setCognitoIdentityPoolRegionPending(ev.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <TextField
-            fullWidth
-            label="Config File S3 ARN"
-            value={configPathPending}
-            onChange={(ev) => {
-              setConfigPathPending(ev.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <Button
-            variant="contained"
-            onClick={() => {
-              if (currentUser) {
-                Auth.updateUserAttributes(currentUser, {
-                  [aws.cognitoUserPoolAttributesMapping
-                    .cognitoIdentityPoolId]: cognitoIdentityPoolIdPending.trim(),
-                  [aws.cognitoUserPoolAttributesMapping
-                    .cognitoIdentityPoolRegion]: cognitoIdentityPoolRegionPending.trim(),
-                  [aws.cognitoUserPoolAttributesMapping
-                    .configPath]: configPathPending.trim(),
-                });
-              }
-            }}
-          >
-            Save
-          </Button>
-        </div>
-      </div>
-    </form>
+    <AwsFileDestinationForm
+      initialValue={undefined}
+      onChange={() => {
+        // do nothing
+      }}
+    />
   );
 }
 
@@ -112,35 +137,37 @@ export function Settings(): JSX.Element {
   );
 
   return (
-    <div>
-      <div>
-        <Typography variant="h6">Endpoint</Typography>
-        <form noValidate>
-          <div>
-            <TextField
-              label="Endpoint"
-              value={endpointPending}
-              onChange={(ev) => {
-                setEndpointPending(ev.target.value);
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (endpointPending) {
-                  setEndpoint(endpointPending);
-                }
-              }}
-            >
-              Save
-            </Button>
-          </div>
-        </form>
-      </div>
-      <div>
-        <Typography variant="h6">AWS Settings</Typography>
-        <AwsSettingsForm />
-      </div>
-    </div>
+    <Row>
+      <Col span={24}>
+        <Space>
+          <Card title="Endpoint">
+            <Form>
+              <Form.Item label="Endpoint">
+                <Input
+                  value={endpointPending}
+                  onChange={(ev) => {
+                    setEndpointPending(ev.target.value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item>
+                <Button
+                  onClick={() => {
+                    if (endpointPending) {
+                      setEndpoint(endpointPending);
+                    }
+                  }}
+                >
+                  Save
+                </Button>
+              </Form.Item>
+            </Form>
+          </Card>
+          <Card title="AWS Settings">
+            <AwsSettingsForm />
+          </Card>
+        </Space>
+      </Col>
+    </Row>
   );
 }

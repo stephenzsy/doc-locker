@@ -1,0 +1,11 @@
+{
+  "AppSyncApiName": "doclockerdev",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false,
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authdoclockersitea73490dfa73490df",
+      "Outputs.UserPoolId"
+    ]
+  }
+}

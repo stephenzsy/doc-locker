@@ -1,0 +1,5 @@
+type UserProfile
+  @model {
+  id: ID!
+  awsConfigs: AWSJSON
+}
